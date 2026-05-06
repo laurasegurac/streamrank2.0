@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>StreamRank — Mis Listas</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/auth-modal.css" />
+  <link rel="stylesheet" href="css/mis-listas.css" />
+</head>
+
+<body>
+
+  <!-- HEADER -->
+  <header id="site-header" role="banner">
+    <div class="header-inner">
+      <a href="index.html" class="header-logo" aria-label="StreamRank — Ir al inicio">
+        <span class="header-logo__icon-wrap" aria-hidden="true">
+          <img src="assets/icons/Clapperboard.svg" alt="" width="20" height="20" />
+        </span>
+        <span class="header-logo__wordmark">Stream<span>Rank</span></span>
+      </a>
+
+      <nav class="header-nav" aria-label="Navegación principal">
+        <a href="index.html" class="nav-link">
+          <span class="nav-link-text">Inicio</span>
+        </a>
+        <a href="top_10.html" class="nav-link">
+          <span class="nav-link-text">Top 10</span>
+        </a>
+        <a href="mis-listas.html" class="nav-link is-active" aria-current="page">
+          <img src="assets/icons/menu.svg" class="nav-link__icon" alt="" aria-hidden="true" />
+          <span class="nav-link-text">Mis listas</span>
+        </a>
+      </nav>
+
+      <div class="header-actions">
+        <form class="search-form" role="search" action="#" method="get">
+          <label for="site-search" class="sr-only">Buscar</label>
+          <svg class="search-form__icon" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <circle cx="6.5" cy="6.5" r="4" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M10 10l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+          <input id="site-search" class="search-form__input" type="search" name="q"
+                 placeholder="Buscar…" autocomplete="off" />
+        </form>
+        <a href="#" class="btn-cta">
+          <img src="assets/icons/enter.svg" class="btn-cta__icon" alt="" aria-hidden="true" />
+          <span class="btn-cta-text">Ingresar</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+
+  <!-- MAIN -->
+  <main id="site-main" tabindex="-1">
+
+    <!-- ── ESTADO: SIN SESIÓN ── -->
+    <div class="listas-no-auth" id="listasNoAuth" hidden>
+      <h2 class="listas-no-auth__title">Inicia sesión para ver tus listas</h2>
+      <p class="listas-no-auth__desc">
+        Crea tu cuenta para guardar películas para ver después, llevar un registro
+        de lo que has visto y crear tus propios tops.
+      </p>
+      <button class="btn-cta listas-no-auth__btn" onclick="AuthModal.open()">
+        Ingresar / Registrarse
+      </button>
+    </div>
+
+    <!-- ── ESTADO: CON SESIÓN ── -->
+    <div class="listas-inner" id="listasInner" hidden>
+
+      <div class="listas-header">
+        <h1 class="listas-title">Mis Listas</h1>
+      </div>
+
+      <!-- Tabs -->
+      <div class="listas-tabs" role="tablist">
+        <button class="listas-tab is-active" role="tab" aria-selected="true" data-tab="agregados">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M3 8h10M8 3v10"/>
+          </svg>
+          Ver después
+        </button>
+        <button class="listas-tab" role="tab" aria-selected="false" data-tab="historial">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M3 4h10M3 8h10M3 12h10"/>
+          </svg>
+          Historial
+        </button>
+        <button class="listas-tab" role="tab" aria-selected="false" data-tab="tops">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M8 2l1.8 3.6L14 6.5l-3 2.9.7 4.1L8 11.4l-3.7 2.1.7-4.1-3-2.9 4.2-.9z"/>
+          </svg>
+          Top Personalizados
+        </button>
+      </div>
+
+      <!-- ══ TAB: AGREGADOS ══ -->
+      <div id="tab-agregados" class="tab-content">
+
+        <!-- Vacío -->
+        <div id="agregadosVacio" class="listas-vacia" hidden>
+          <div class="listas-vacia__icono" aria-hidden="true">🔖</div>
+          <p class="listas-vacia__texto">Tu watchlist está vacío</p>
+          <p class="listas-vacia__subtexto">Agrega películas que te interesen para que aparezcan aquí.</p>
+        </div>
+
+        <!-- Con contenido -->
+        <div id="agregadosContenedor" class="listas-seccion"></div>
+
+      </div>
+
+      <!-- ══ TAB: HISTORIAL ══ -->
+      <div id="tab-historial" class="tab-content" hidden>
+
+        <!-- Vacío -->
+        <div id="historialVacio" class="listas-vacia" hidden>
+          <div class="listas-vacia__icono" aria-hidden="true">⭐</div>
+          <p class="listas-vacia__texto">Tu historial está vacío</p>
+          <p class="listas-vacia__subtexto">Marca los items como vistos para que aparezcan aquí.</p>
+        </div>
+
+        <!-- Con contenido -->
+        <div id="historialContenedor" class="listas-seccion"></div>
+
+      </div>
+
+      <!-- ══ TAB: TOPS PERSONALIZADOS ══ -->
+      <div id="tab-tops" class="tab-content" hidden>
+
+        <!-- Botón crear nuevo -->
+        <div class="crear-top-wrapper">
+          <button class="btn-crear-top" id="btnCrearTop" type="button">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M8 2v12M2 8h12"/>
+            </svg>
+            Crear nuevo Top 10
+          </button>
+        </div>
+
+        <!-- Formulario nuevo top (oculto por defecto) -->
+        <div id="formCrearTop" class="top-form" hidden>
+          <div class="top-form__field">
+            <label for="nombreTop" class="top-form__label">Nombre del top</label>
+            <input id="nombreTop" class="top-form__input" type="text"
+                   placeholder="Ej: Mis favoritas de ciencia ficción" />
+          </div>
+          <div class="top-form__actions">
+            <button class="top-form__cancel" id="btnCancelarTop" type="button">Cancelar</button>
+            <button class="top-form__save" id="btnGuardarTop" type="button">Guardar</button>
+          </div>
+        </div>
+
+        <!-- Grid de tops creados -->
+        <div id="topsGrid" class="tops-grid"></div>
+
+      </div>
+
+    </div>
+  </main>
+
+
+  <!-- FOOTER -->
+  <footer id="site-footer" role="contentinfo">
+    <div class="footer-inner">
+      <p class="footer-copy">&copy; 2026 <strong>StreamRank</strong>. Todos los derechos reservados.</p>
+      <p class="footer-note">Actualizado en tiempo real. Los datos son ilustrativos.</p>
+    </div>
+  </footer>
+
+  <script src="js/auth.js"></script>
+  <script src="js/auth-modal.js"></script>
+  <script src="js/listas.js"></script>
+  <script src="js/mis-listas.js"></script>
+  <script>Auth.updateHeaderUI();</script> 
+
+</body>
+</html>

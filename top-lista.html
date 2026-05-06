@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="StreamRank — Top 10 por categoría." />
+  <title>StreamRank — Top 10</title>
+ 
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+ 
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/inicio.css" />
+  <link rel="stylesheet" href="css/top-lista.css" />
+  <link rel="stylesheet" href="css/modal.css" />
+  <link rel="stylesheet" href="css/auth-modal.css" />
+</head>
+ 
+<body>
+ 
+  <!-- HEADER -->
+  <header id="site-header" role="banner">
+    <div class="header-inner">
+      <a href="index.html" class="header-logo" aria-label="StreamRank — Ir al inicio">
+        <span class="header-logo__icon-wrap" aria-hidden="true">
+          <img src="assets/icons/Clapperboard.svg" alt="" width="20" height="20" />
+        </span>
+        <span class="header-logo__wordmark">Stream<span>Rank</span></span>
+      </a>
+ 
+      <nav class="header-nav" aria-label="Navegación principal">
+        <a href="index.html" class="nav-link">
+          <span class="nav-link-text">Inicio</span>
+        </a>
+        <a href="top_10.html" class="nav-link is-active" aria-current="page">
+          <span class="nav-link-text">Top 10</span>
+        </a>
+        <a href="mis-listas.html" class="nav-link">
+          <img src="assets/icons/menu.svg" class="nav-link__icon" alt="" aria-hidden="true" />
+          <span class="nav-link-text">Mis listas</span>
+        </a>
+      </nav>
+ 
+      <div class="header-actions">
+        <form class="search-form" role="search" action="#" method="get">
+          <label for="site-search" class="sr-only">Buscar películas o series</label>
+          <svg class="search-form__icon" viewBox="0 0 16 16" fill="none" aria-hidden="true" focusable="false">
+            <circle cx="6.5" cy="6.5" r="4" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M10 10l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+          <input id="site-search" class="search-form__input" type="search" name="q"
+            placeholder="Buscar…" autocomplete="off" aria-label="Buscar películas o series" />
+        </form>
+        <a href="registro.html" class="btn-cta">
+          <img src="assets/icons/enter.svg" class="btn-cta__icon" alt="" aria-hidden="true" />
+          <span class="btn-cta-text">Ingresar</span>
+        </a>
+      </div>
+    </div>
+  </header>
+ 
+ 
+  <!-- MAIN -->
+  <main id="site-main" tabindex="-1">
+    <section class="section-lista" aria-labelledby="lista-titulo">
+ 
+      <!-- Breadcrumb + título -->
+      <div class="lista-header">
+        <a href="top_10.html" class="lista-back" aria-label="Volver a categorías">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M10 3L5 8l5 5"/>
+          </svg>
+          Volver a categorías
+        </a>
+        <h1 class="lista-titulo" id="lista-titulo">
+          Top 10: <span class="lista-titulo__nombre" id="listaNombre">—</span>
+        </h1>
+      </div>
+ 
+      <!-- Filtros (misma estructura que index) -->
+      <div class="filters-bar" role="group" aria-label="Filtros del ranking">
+        <div class="filter-tabs" role="tablist" aria-label="Tipo de contenido">
+          <button class="filter-tab is-active" role="tab" aria-selected="true" data-filter="all">
+            <img src="assets/icons/general.svg" alt="" class="filter-icon" />
+            Todos
+          </button>
+          <button class="filter-tab" role="tab" aria-selected="false" data-filter="movie">
+            <img src="assets/icons/Pelicula.svg" alt="" class="filter-icon" />
+            Películas
+          </button>
+          <button class="filter-tab" role="tab" aria-selected="false" data-filter="series">
+            <img src="assets/icons/Series.svg" alt="" class="filter-icon" />
+            Series
+          </button>
+        </div>
+ 
+        <div class="filter-row">
+          <label for="filter-genre" class="sr-only">Filtrar por género</label>
+          <select id="filter-genre" class="filter-select">
+            <option value="">Todos los géneros</option>
+            <option value="action">Acción</option>
+            <option value="drama">Drama</option>
+            <option value="scifi">Ciencia ficción</option>
+            <option value="comedy">Comedia</option>
+            <option value="thriller">Thriller</option>
+            <option value="fantasy">Fantasía</option>
+            <option value="crime">Crimen</option>
+            <option value="animation">Animación</option>
+            <option value="adventure">Aventura</option>
+            <option value="mystery">Misterio</option>
+          </select>
+          <label for="filter-duration" class="sr-only">Filtrar por duración</label>
+          <select id="filter-duration" class="filter-select">
+            <option value="">Cualquier duración</option>
+            <option value="short">Menos de 90 min</option>
+            <option value="medium">90 – 120 min</option>
+            <option value="long">Más de 120 min</option>
+          </select>
+          <div class="filter-row__spacer" aria-hidden="true"></div>
+          <div class="sort-group" role="group" aria-label="Ordenar por">
+            <button class="sort-btn is-active" data-sort="rating" aria-pressed="true">
+              <img src="assets/icons/Rating.svg" alt="" class="sort-icon" />
+              Rating
+            </button>
+            <button class="sort-btn" data-sort="popularity" aria-pressed="false">
+              <img src="assets/icons/Popularidad.svg" alt="" class="sort-icon" />
+              Popularidad
+            </button>
+          </div>
+        </div>
+      </div>
+ 
+      <!-- Lista de tarjetas — se genera con JS -->
+      <ol class="ranking-list" id="rankingList" aria-label="Lista Top 10"></ol>
+ 
+    </section>
+  </main>
+ 
+ 
+  <!-- FOOTER -->
+  <footer id="site-footer" role="contentinfo">
+    <div class="footer-inner">
+      <p class="footer-copy">
+        &copy; 2026 <strong>StreamRank</strong>. Todos los derechos reservados.
+      </p>
+      <p class="footer-note">
+        Actualizado en tiempo real. Los datos se obtienen de fuentes públicas de cada plataforma.
+      </p>
+    </div>
+  </footer>
+ 
+  <script src="js/top-lista.js"></script>
+  <script src="js/modal.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/auth-modal.js"></script>
+  <script src="js/listas.js"></script>
+  <script>Auth.updateHeaderUI();</script> 
+ 
+</body>
+</html>

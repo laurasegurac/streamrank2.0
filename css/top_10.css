@@ -1,0 +1,226 @@
+/* ===================================================
+   TOP10.CSS — Estilos exclusivos de top10.html
+=================================================== */
+
+
+/* ── CONTENEDOR PRINCIPAL ── */
+.top10-inner {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 56px 48px 80px;
+  display: flex;
+  flex-direction: column;
+  gap: 64px;
+}
+
+
+/* ── ENCABEZADO DE PÁGINA ── */
+.top10-header {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 680px;
+}
+
+.top10-heading {
+  font-size: clamp(2rem, 5vw, 3rem);
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+  color: var(--color-text-primary);
+}
+
+.top10-subheading {
+  font-size: var(--text-md);
+  color: var(--color-text-muted);
+  line-height: 1.65;
+  max-width: 560px;
+}
+
+
+/* ── SECCIÓN (plataforma / estudio / saga) ── */
+.top10-section {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.top10-section__title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.top10-section__title h2 {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  letter-spacing: -0.01em;
+}
+
+.top10-section__icon {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+}
+
+.top10-section__icon--red    { color: var(--color-brand); }
+.top10-section__icon--blue   { color: #3B82F6; }
+.top10-section__icon--purple { color: #A855F7; }
+
+
+/* ── GRID DE TARJETAS ── */
+.top10-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+
+/* ── TARJETA ── */
+.top10-card {
+  position: relative;
+  height: 160px;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  cursor: pointer;
+  text-decoration: none;
+  display: block;
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+}
+
+.top10-card:hover {
+  transform: translateY(-3px);
+}
+
+/* Variantes de hover por tipo */
+.top10-card--platform:hover {
+  border-color: rgba(231, 0, 11, 0.5);
+  box-shadow: 0 8px 24px rgba(231, 0, 11, 0.15);
+}
+
+.top10-card--studio:hover {
+  border-color: rgba(59, 130, 246, 0.5);
+  box-shadow: 0 8px 24px rgba(59, 130, 246, 0.15);
+}
+
+.top10-card--saga:hover {
+  border-color: rgba(168, 85, 247, 0.5);
+  box-shadow: 0 8px 24px rgba(168, 85, 247, 0.15);
+}
+
+/* Fondo con imagen */
+.top10-card__bg {
+  position: absolute;
+  inset: 0;
+  background: var(--color-surface);
+}
+
+.top10-card__bg img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  opacity: 0.25;
+  transition: opacity 0.3s, transform 0.5s;
+}
+
+.top10-card:hover .top10-card__bg img {
+  opacity: 0.4;
+  transform: scale(1.06);
+}
+
+/* Gradiente sobre la imagen */
+.top10-card__bg::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to top,
+    rgba(15, 23, 43, 0.95) 0%,
+    rgba(15, 23, 43, 0.6) 50%,
+    rgba(15, 23, 43, 0.2) 100%
+  );
+}
+
+/* Contenido de la tarjeta */
+.top10-card__body {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 20px;
+  gap: 4px;
+}
+
+/* Etiqueta "TOP 10" */
+.top10-card__label {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.top10-card__label--red    { color: var(--color-brand); }
+.top10-card__label--blue   { color: #60A5FA; }
+.top10-card__label--purple { color: #C084FC; }
+
+/* Nombre de la categoría */
+.top10-card__name {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #ffffff;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  transition: color 0.18s;
+}
+
+.top10-card--platform:hover .top10-card__name { color: #fca5a5; }
+.top10-card--studio:hover   .top10-card__name { color: #93c5fd; }
+.top10-card--saga:hover     .top10-card__name { color: #d8b4fe; }
+
+
+/* ── RESPONSIVE ── */
+@media (max-width: 1024px) {
+  .top10-inner {
+    padding: 44px 32px 64px;
+    gap: 52px;
+  }
+
+  .top10-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .top10-inner {
+    padding: 32px 20px 48px;
+    gap: 40px;
+  }
+
+  .top10-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .top10-card { height: 130px; }
+
+  .top10-card__name { font-size: 1.1rem; }
+}
+
+@media (max-width: 480px) {
+  .top10-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .top10-card { height: 110px; }
+
+  .top10-card__body { padding: 14px; }
+
+  .top10-card__name { font-size: 1rem; }
+
+  .top10-heading { font-size: 1.8rem; }
+}
