@@ -25,7 +25,7 @@
       const raw = localStorage.getItem(key);
       const d   = raw ? JSON.parse(raw) : {};
       return {
-        verDespues: d.verDespues || [],
+        verDespues: d.verDespues || d.agregados || [],
         historial:  d.historial  || [],
         tops:       d.tops       || [],
       };
@@ -45,11 +45,11 @@
     const user = Auth.getUser();
     if (!user) {
       noAuth.hidden = false;
-      inner.hidden = true;
+      inner.hidden  = true;
       return;
     }
     noAuth.hidden = true;
-    inner.hidden = false;
+    inner.hidden  = false;
     data = loadData();
     renderVerDespues();
     renderHistorial();
@@ -78,16 +78,18 @@
   function platformClass(badge) {
     if (!badge) return 'ml-badge--default';
     const b = badge.toLowerCase();
-    if (b.includes('netflix'))                      return 'ml-badge--netflix';
-    if (b.includes('hbo'))                          return 'ml-badge--hbo';
-    if (b.includes('disney'))                       return 'ml-badge--disney';
-    if (b.includes('prime')||b.includes('amazon'))  return 'ml-badge--prime';
-    if (b.includes('apple'))                        return 'ml-badge--apple';
+    if (b.includes('netflix'))                     return 'ml-badge--netflix';
+    if (b.includes('hbo'))                         return 'ml-badge--hbo';
+    if (b.includes('disney'))                      return 'ml-badge--disney';
+    if (b.includes('prime') || b.includes('amazon')) return 'ml-badge--prime';
+    if (b.includes('apple'))                       return 'ml-badge--apple';
     return 'ml-badge--default';
   }
 
   function fechaHoy() {
-    return new Date().toLocaleDateString('es-CO', { day:'numeric', month:'numeric', year:'numeric' });
+    return new Date().toLocaleDateString('es-CO', {
+      day: 'numeric', month: 'numeric', year: 'numeric'
+    });
   }
 
 
@@ -110,11 +112,16 @@
 
   /* ══════════════════════════════════════════════
      TAB 1 — VER DESPUÉS
+     IMPORTANTE: los IDs en mis-listas.html son
+     "agregadosVacio" y "agregadosContenedor"
   ══════════════════════════════════════════════ */
-  const vdVacio      = document.getElementById('verDespuesVacio');
-  const vdContenedor = document.getElementById('verDespuesContenedor');
+  // Soporte para ambas variantes de IDs
+  const vdVacio      = document.getElementById('agregadosVacio')      || document.getElementById('verDespuesVacio');
+  const vdContenedor = document.getElementById('agregadosContenedor') || document.getElementById('verDespuesContenedor');
 
   function renderVerDespues() {
+    if (!vdVacio || !vdContenedor) return;
+
     if (data.verDespues.length === 0) {
       vdVacio.hidden = false;
       vdContenedor.innerHTML = '';
@@ -125,20 +132,28 @@
       <div class="ml-card" data-id="${item.id}">
         <img src="${item.img}" alt="${item.title}" class="ml-card__img" />
         <div class="ml-card__body">
-          <div class="ml-card__tag">${item.type} · ${item.genres}</div>
+          <div class="ml-card__tag">${item.type || ''} ${item.genres ? '· ' + item.genres : ''}</div>
           <h3 class="ml-card__title">${item.title}</h3>
           <div class="ml-card__rating">
-            <svg width="11" height="11" viewBox="0 0 16 16" fill="#FACC15" aria-hidden="true"><path d="M8 1l1.8 3.6L14 5.5l-3 2.9.7 4.1L8 10.4l-3.7 2.1.7-4.1-3-2.9 4.2-.9z"/></svg>
-            ${item.rating}
+            <svg width="11" height="11" viewBox="0 0 16 16" fill="#FACC15" aria-hidden="true">
+              <path d="M8 1l1.8 3.6L14 5.5l-3 2.9.7 4.1L8 10.4l-3.7 2.1.7-4.1-3-2.9 4.2-.9z"/>
+            </svg>
+            ${item.rating || '—'}
           </div>
-          <p class="ml-card__desc">${item.desc}</p>
+          <p class="ml-card__desc">${item.desc || ''}</p>
           <div class="ml-card__actions">
             <button class="ml-btn ml-btn--primary btn-en-historial" data-id="${item.id}">
-              <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8l4 4 6-7"/></svg>
-              En Historial
+              <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor"
+                   stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M3 8l4 4 6-7"/>
+              </svg>
+              Ya lo vi
             </button>
             <button class="ml-btn ml-btn--ghost btn-eliminar-vd" data-id="${item.id}">
-              <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 4h10M6 4V2h4v2M5 4l.5 9h5L11 4"/></svg>
+              <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor"
+                   stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M3 4h10M6 4V2h4v2M5 4l.5 9h5L11 4"/>
+              </svg>
               Eliminar
             </button>
           </div>
@@ -150,12 +165,12 @@
     vdContenedor.querySelectorAll('.btn-en-historial').forEach(btn => {
       btn.addEventListener('click', () => moverAHistorial(btn.dataset.id));
     });
+
     vdContenedor.querySelectorAll('.btn-eliminar-vd').forEach(btn => {
       btn.addEventListener('click', () => {
         data.verDespues = data.verDespues.filter(i => i.id !== btn.dataset.id);
         saveData();
         renderVerDespues();
-        sincronizarBotonesGuardar();
       });
     });
   }
@@ -170,7 +185,7 @@
         miRating:   0,
         liked:      false,
         nota:       '',
-        estado:     item.type === 'Serie' ? 'empezada' : null,
+        estado:     (item.type || '').toLowerCase().includes('serie') ? 'empezada' : null,
         temporada:  1,
         capitulo:   1,
       });
@@ -179,7 +194,6 @@
     saveData();
     renderVerDespues();
     renderHistorial();
-    sincronizarBotonesGuardar();
     switchTab('historial');
   }
 
@@ -191,6 +205,8 @@
   const histContenedor = document.getElementById('historialContenedor');
 
   function renderHistorial() {
+    if (!histVacio || !histContenedor) return;
+
     if (data.historial.length === 0) {
       histVacio.hidden = false;
       histContenedor.innerHTML = '';
@@ -199,26 +215,29 @@
     histVacio.hidden = true;
 
     histContenedor.innerHTML = data.historial.map(item => {
-      const esSerie = item.type === 'Serie';
+      const esSerie = (item.type || '').toLowerCase().includes('serie');
 
       const estadoHTML = esSerie ? `
         <div class="hist-fila">
           <label class="hist-label">Estado:</label>
           <select class="hist-select hist-estado" data-id="${item.id}">
-            <option value="por_ver"   ${item.estado==='por_ver'   ?'selected':''}>Por ver</option>
-            <option value="empezada"  ${item.estado==='empezada'  ?'selected':''}>Empezada</option>
-            <option value="terminada" ${item.estado==='terminada' ?'selected':''}>Terminada</option>
+            <option value="por_ver"   ${item.estado === 'por_ver'   ? 'selected' : ''}>Por ver</option>
+            <option value="empezada"  ${item.estado === 'empezada'  ? 'selected' : ''}>Empezada</option>
+            <option value="terminada" ${item.estado === 'terminada' ? 'selected' : ''}>Terminada</option>
           </select>
           ${item.estado !== 'terminada' ? `
             <label class="hist-label">Temp:</label>
-            <input type="number" min="1" value="${item.temporada||1}" class="hist-num hist-temporada" data-id="${item.id}" />
+            <input type="number" min="1" value="${item.temporada || 1}"
+                   class="hist-num hist-temporada" data-id="${item.id}" />
             <label class="hist-label">Cap:</label>
-            <input type="number" min="1" value="${item.capitulo||1}" class="hist-num hist-capitulo" data-id="${item.id}" />
+            <input type="number" min="1" value="${item.capitulo || 1}"
+                   class="hist-num hist-capitulo" data-id="${item.id}" />
           ` : ''}
         </div>` : '';
 
       const ratingHTML = [1,2,3,4,5,6,7,8,9,10].map(n => `
-        <button class="hist-rating-btn ${item.miRating===n?'is-active':''}" data-id="${item.id}" data-n="${n}">${n}</button>
+        <button class="hist-rating-btn ${item.miRating === n ? 'is-active' : ''}"
+                data-id="${item.id}" data-n="${n}">${n}</button>
       `).join('');
 
       return `
@@ -236,13 +255,16 @@
                 <div class="hist-rating-nums">${ratingHTML}</div>
               </div>
               <div class="hist-fila hist-fila--acciones">
-                <button class="hist-btn-liked ${item.liked?'is-liked':''}" data-id="${item.id}">
+                <button class="hist-btn-liked ${item.liked ? 'is-liked' : ''}" data-id="${item.id}">
                   ${item.liked
                     ? `<svg width="14" height="14" viewBox="0 0 16 16" fill="#E7000B" aria-hidden="true"><path d="M8 14s-6-3.8-6-8a4 4 0 0 1 6-3.4A4 4 0 0 1 14 6c0 4.2-6 8-6 8z"/></svg> Me encantó`
                     : `<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M8 14s-6-3.8-6-8a4 4 0 0 1 6-3.4A4 4 0 0 1 14 6c0 4.2-6 8-6 8z"/></svg> No me convenció`}
                 </button>
                 <button class="ml-btn ml-btn--ghost btn-eliminar-hist" data-id="${item.id}">
-                  <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 4h10M6 4V2h4v2M5 4l.5 9h5L11 4"/></svg>
+                  <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor"
+                       stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M3 4h10M6 4V2h4v2M5 4l.5 9h5L11 4"/>
+                  </svg>
                   Eliminar
                 </button>
               </div>
@@ -250,12 +272,13 @@
           </div>
           <div class="hist-card__notas">
             <p class="hist-notas-label">MIS NOTAS (DIARIO)</p>
-            <textarea class="hist-textarea hist-nota" data-id="${item.id}" placeholder="Escribe tus pensamientos sobre esto...">${item.nota||''}</textarea>
+            <textarea class="hist-textarea hist-nota" data-id="${item.id}"
+                      placeholder="Escribe tus pensamientos sobre esto...">${item.nota || ''}</textarea>
           </div>
         </div>`;
     }).join('');
 
-    /* Eventos */
+    /* Eventos historial */
     histContenedor.querySelectorAll('.hist-estado').forEach(sel => {
       sel.addEventListener('change', () => {
         updateHistItem(sel.dataset.id, { estado: sel.value });
@@ -263,18 +286,20 @@
       });
     });
     histContenedor.querySelectorAll('.hist-temporada').forEach(inp => {
-      inp.addEventListener('change', () => updateHistItem(inp.dataset.id, { temporada: parseInt(inp.value)||1 }));
+      inp.addEventListener('change', () =>
+        updateHistItem(inp.dataset.id, { temporada: parseInt(inp.value) || 1 }));
     });
     histContenedor.querySelectorAll('.hist-capitulo').forEach(inp => {
-      inp.addEventListener('change', () => updateHistItem(inp.dataset.id, { capitulo: parseInt(inp.value)||1 }));
+      inp.addEventListener('change', () =>
+        updateHistItem(inp.dataset.id, { capitulo: parseInt(inp.value) || 1 }));
     });
     histContenedor.querySelectorAll('.hist-rating-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         const n = parseInt(btn.dataset.n);
         updateHistItem(btn.dataset.id, { miRating: n });
-        histContenedor.querySelectorAll(`.hist-rating-btn[data-id="${btn.dataset.id}"]`).forEach(b => {
-          b.classList.toggle('is-active', parseInt(b.dataset.n) === n);
-        });
+        histContenedor
+          .querySelectorAll(`.hist-rating-btn[data-id="${btn.dataset.id}"]`)
+          .forEach(b => b.classList.toggle('is-active', parseInt(b.dataset.n) === n));
       });
     });
     histContenedor.querySelectorAll('.hist-btn-liked').forEach(btn => {
@@ -286,7 +311,8 @@
       });
     });
     histContenedor.querySelectorAll('.hist-nota').forEach(ta => {
-      ta.addEventListener('input', () => updateHistItem(ta.dataset.id, { nota: ta.value }));
+      ta.addEventListener('input', () =>
+        updateHistItem(ta.dataset.id, { nota: ta.value }));
     });
     histContenedor.querySelectorAll('.btn-eliminar-hist').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -304,6 +330,7 @@
     saveData();
   }
 
+
   /* ══════════════════════════════════════════════
      TAB 3 — TOPS PERSONALIZADOS
   ══════════════════════════════════════════════ */
@@ -315,30 +342,36 @@
   const nombreInp   = document.getElementById('nombreTop');
 
   function renderTops() {
+    if (!topsGrid) return;
     topsGrid.innerHTML = data.tops.map(top => buildTopCard(top)).join('');
-    topsGrid.querySelectorAll('.top-card').forEach(card => initTopCard(card, card.dataset.topId));
+    topsGrid.querySelectorAll('.top-card').forEach(card =>
+      initTopCard(card, card.dataset.topId));
   }
 
   function buildTopCard(top) {
-    const items = (top.items||[]).map((item,i) => `
+    const items = (top.items || []).map((item, i) => `
       <div class="top-item" draggable="true" data-item-id="${item.id}">
-        <span class="top-item__pos">${i+1}</span>
+        <span class="top-item__pos">${i + 1}</span>
         <img class="top-item__img" src="${item.img}" alt="${item.title}" loading="lazy" />
         <span class="top-item__titulo">${item.title}</span>
-        <button class="top-item__delete" data-item-id="${item.id}" type="button" aria-label="Eliminar">✕</button>
+        <button class="top-item__delete" data-item-id="${item.id}"
+                type="button" aria-label="Eliminar">✕</button>
       </div>`).join('');
 
     return `
       <div class="top-card" data-top-id="${top.id}">
         <div class="top-card__header">
           <h3 class="top-card__nombre">${top.nombre}</h3>
-          <p class="top-card__meta"><span class="top-count">${(top.items||[]).length}</span> elementos en esta lista</p>
+          <p class="top-card__meta">
+            <span class="top-count">${(top.items || []).length}</span> elementos en esta lista
+          </p>
         </div>
         <div class="top-card__items" data-lista>${items}</div>
         <div class="top-card__buscador">
           <div class="top-search-wrap">
             <span class="top-search-icon">
-              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"
+                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <circle cx="6.5" cy="6.5" r="4"/><path d="M10 10l3 3"/>
               </svg>
             </span>
@@ -361,24 +394,30 @@
       del.closest('.top-item').remove();
       updateTopData(topId, lista, contador);
     });
-    lista.addEventListener('dragstart', e => e.target.closest('.top-item')?.classList.add('dragging'));
-    lista.addEventListener('dragend',   e => { e.target.closest('.top-item')?.classList.remove('dragging'); updateTopData(topId, lista, contador); });
-    lista.addEventListener('dragover',  e => {
+    lista.addEventListener('dragstart', e =>
+      e.target.closest('.top-item')?.classList.add('dragging'));
+    lista.addEventListener('dragend', e => {
+      e.target.closest('.top-item')?.classList.remove('dragging');
+      updateTopData(topId, lista, contador);
+    });
+    lista.addEventListener('dragover', e => {
       e.preventDefault();
       const drag = lista.querySelector('.dragging');
       if (!drag) return;
-      const next = [...lista.querySelectorAll('.top-item:not(.dragging)')].find(s => e.clientY < s.getBoundingClientRect().top + s.getBoundingClientRect().height/2);
-      lista.insertBefore(drag, next||null);
+      const next = [...lista.querySelectorAll('.top-item:not(.dragging)')]
+        .find(s => e.clientY < s.getBoundingClientRect().top + s.getBoundingClientRect().height / 2);
+      lista.insertBefore(drag, next || null);
       actualizarPosiciones(lista, contador);
     });
 
     input.addEventListener('input', () => {
       const q = input.value.trim().toLowerCase();
-      if (!q) { resultados.style.display='none'; return; }
+      if (!q) { resultados.style.display = 'none'; return; }
       const filtrados = CATALOGO.filter(c => c.title.toLowerCase().includes(q));
-      if (!filtrados.length) { resultados.style.display='none'; return; }
+      if (!filtrados.length) { resultados.style.display = 'none'; return; }
       resultados.innerHTML = filtrados.map(c => `
-        <div class="top-resultado-item" data-id="${c.id}" data-title="${c.title}" data-img="${c.img}">
+        <div class="top-resultado-item" data-id="${c.id}"
+             data-title="${c.title}" data-img="${c.img}">
           <img src="${c.img}" alt="${c.title}" class="top-resultado-img" loading="lazy" />
           <span>${c.title}</span>
         </div>`).join('');
@@ -387,27 +426,34 @@
         r.addEventListener('click', () => {
           agregarItemTop(lista, contador, r.dataset.id, r.dataset.title, r.dataset.img);
           updateTopData(topId, lista, contador);
-          input.value = ''; resultados.style.display = 'none';
+          input.value = '';
+          resultados.style.display = 'none';
         });
       });
     });
-    document.addEventListener('click', e => { if (!cardEl.contains(e.target)) resultados.style.display='none'; });
+    document.addEventListener('click', e => {
+      if (!cardEl.contains(e.target)) resultados.style.display = 'none';
+    });
   }
 
   function agregarItemTop(lista, contador, id, title, img) {
     const item = document.createElement('div');
-    item.className = 'top-item'; item.draggable = true; item.dataset.itemId = id;
+    item.className = 'top-item';
+    item.draggable = true;
+    item.dataset.itemId = id;
     item.innerHTML = `
-      <span class="top-item__pos">${lista.children.length+1}</span>
+      <span class="top-item__pos">${lista.children.length + 1}</span>
       <img class="top-item__img" src="${img}" alt="${title}" loading="lazy" />
       <span class="top-item__titulo">${title}</span>
-      <button class="top-item__delete" data-item-id="${id}" type="button" aria-label="Eliminar">✕</button>`;
+      <button class="top-item__delete" data-item-id="${id}"
+              type="button" aria-label="Eliminar">✕</button>`;
     lista.appendChild(item);
     actualizarPosiciones(lista, contador);
   }
 
   function actualizarPosiciones(lista, contador) {
-    lista.querySelectorAll('.top-item').forEach((el,i) => el.querySelector('.top-item__pos').textContent = i+1);
+    lista.querySelectorAll('.top-item').forEach((el, i) =>
+      el.querySelector('.top-item__pos').textContent = i + 1);
     if (contador) contador.textContent = lista.children.length;
   }
 
@@ -416,25 +462,37 @@
     const top = data.tops.find(t => t.id === topId);
     if (!top) return;
     top.items = [...lista.querySelectorAll('.top-item')].map(el => ({
-      id: el.dataset.itemId,
+      id:    el.dataset.itemId,
       title: el.querySelector('.top-item__titulo').textContent,
-      img: el.querySelector('.top-item__img').src,
+      img:   el.querySelector('.top-item__img').src,
     }));
     saveData();
   }
 
-  btnCrear.addEventListener('click',    () => { formTop.hidden=false; btnCrear.style.display='none'; nombreInp.focus(); });
-  btnCancelar.addEventListener('click', () => { formTop.hidden=true;  btnCrear.style.display=''; nombreInp.value=''; });
-  btnGuardar.addEventListener('click',  () => {
+  if (btnCrear) btnCrear.addEventListener('click', () => {
+    formTop.hidden = false;
+    btnCrear.style.display = 'none';
+    nombreInp.focus();
+  });
+  if (btnCancelar) btnCancelar.addEventListener('click', () => {
+    formTop.hidden = true;
+    btnCrear.style.display = '';
+    nombreInp.value = '';
+  });
+  if (btnGuardar) btnGuardar.addEventListener('click', () => {
     const nombre = nombreInp.value.trim() || 'Mi Nuevo Top';
     data.tops.push({ id: Date.now().toString(), nombre, items: [] });
-    saveData(); renderTops();
-    formTop.hidden=true; btnCrear.style.display=''; nombreInp.value='';
+    saveData();
+    renderTops();
+    formTop.hidden = true;
+    btnCrear.style.display = '';
+    nombreInp.value = '';
   });
 
 
   /* ══════════════════════════════════════════════
-     API PÚBLICA — usada desde otras páginas
+     API PÚBLICA (override de listas.js para esta
+     página, donde `data` ya está cargado en memoria)
   ══════════════════════════════════════════════ */
   window.Listas = {
     guardar(item) {
@@ -442,72 +500,29 @@
       if (data.verDespues.find(i => i.id === item.id)) return 'duplicado';
       data.verDespues.push(item);
       saveData();
+      renderVerDespues();
       return 'ok';
     },
+    quitar(id) {
+      const estaba = !!data.verDespues.find(i => i.id === id);
+      if (!estaba) return false;
+      data.verDespues = data.verDespues.filter(i => i.id !== id);
+      saveData();
+      renderVerDespues();
+      return true;
+    },
     estaGuardado(id) {
-      return !!(data.verDespues.find(i=>i.id===id) || data.historial.find(i=>i.id===id));
-    }
+      return !!(data.verDespues.find(i => i.id === id) ||
+                data.historial.find(i => i.id === id));
+    },
+    estaEnHistorial(id) {
+      return !!data.historial.find(i => i.id === id);
+    },
+    loadData: () => data,
+    saveData,
   };
-
-  function sincronizarBotonesGuardar() {
-    document.querySelectorAll('li[data-item-id] .btn-save').forEach(btn => {
-      const id = btn.closest('li[data-item-id]')?.dataset.itemId;
-      if (id && window.Listas.estaGuardado(id)) {
-        btn.classList.add('is-saved');
-        btn.setAttribute('aria-pressed','true');
-      }
-    });
-  }
 
   initPage();
   window.addEventListener('auth:changed', initPage);
-  sincronizarBotonesGuardar();
-
-  /* ── Click en btn-save ── */
-  document.addEventListener('click', e => {
-    const saveBtn = e.target.closest('.btn-save');
-    if (!saveBtn) return;
-    if (!Auth.getUser()) return;
-
-    const li = saveBtn.closest('li[data-item-id]');
-    if (!li) return;
-    const itemId = li.dataset.itemId;
-    const card   = li.querySelector('.card');
-    const item = {
-      id:       itemId,
-      title:    card.querySelector('.card__title')?.textContent?.trim()     || '',
-      type:     card.querySelector('.card__type')?.textContent?.trim()      || '',
-      genres:   card.querySelector('.card__genres')?.textContent?.trim()    || '',
-      rating:   card.querySelector('.card__rating')?.textContent?.replace(/[^\d.]/g,'')?.trim() || '',
-      desc:     card.querySelector('.card__desc')?.textContent?.trim()      || '',
-      img:      card.querySelector('.card__thumb img')?.src                 || '',
-      platform: card.querySelector('.platform-badge')?.textContent?.trim() || '',
-    };
-
-    const resultado = Listas.guardar(item);
-
-    if (resultado === 'ok') {
-      saveBtn.classList.add('is-saved');
-      saveBtn.setAttribute('aria-pressed','true');
-      showToast(`"${item.title}" agregado a Ver después`);
-    } else if (resultado === 'duplicado') {
-      showToast(`"${item.title}" ya está en tu lista`);
-    } else {
-      showToast(`"${item.title}" ya está en tu Historial`);
-    }
-  });
-
-  function showToast(msg) {
-    let t = document.getElementById('listasToast');
-    if (!t) {
-      t = document.createElement('div'); t.id = 'listasToast';
-      t.style.cssText = `position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(20px);background:#0F172B;border:1px solid rgba(255,255,255,0.12);color:#fff;font-size:14px;font-weight:600;padding:12px 24px;border-radius:9999px;box-shadow:0 8px 24px rgba(0,0,0,0.4);z-index:700;opacity:0;transition:opacity 0.25s,transform 0.25s;font-family:var(--font-main);white-space:nowrap;`;
-      document.body.appendChild(t);
-    }
-    t.textContent = msg;
-    requestAnimationFrame(() => { t.style.opacity='1'; t.style.transform='translateX(-50%) translateY(0)'; });
-    clearTimeout(t._t);
-    t._t = setTimeout(() => { t.style.opacity='0'; t.style.transform='translateX(-50%) translateY(10px)'; }, 2800);
-  }
 
 })();
