@@ -263,14 +263,13 @@
 
 /* Primario — "Ya lo vi" */
 .ml-btn--primary {
-  background: rgba(255, 255, 255, 0.05);
-  color: var(--color-text-muted);
-  border-color: var(--color-border);
+  background: rgba(231, 0, 11, 0.12);
+  color: var(--color-brand);
+  border-color: rgba(231, 0, 11, 0.25);
 }
 
 .ml-btn--primary:hover {
   background: rgba(231, 0, 11, 0.22);
-  color: var(--color-text-primary);
   border-color: rgba(231, 0, 11, 0.45);
 }
 
@@ -283,8 +282,7 @@
 
 .ml-btn--ghost:hover {
   background: rgba(255, 255, 255, 0.1);
-  color: var(--color-brand);
-  
+  color: var(--color-text-primary);
 }
 
 
@@ -824,4 +822,101 @@
   .ml-badge { display: none; }
 
   .hist-card__top { gap: 12px; padding: 12px; }
+}
+
+
+/* ══════════════════════════════════════════════
+   TOPS — botones de cabecera (renombrar / eliminar)
+══════════════════════════════════════════════ */
+.top-card__header-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+/* Vista nombre + lápiz */
+.top-card__nombre-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+
+/* Form inline de renombrar */
+.top-card__rename-form {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+}
+
+.top-card__rename-input {
+  flex: 1;
+  min-width: 0;
+  padding: 5px 10px;
+  background: var(--color-bg);
+  border: 1px solid var(--color-brand);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-primary);
+  font-family: var(--font-main);
+  font-size: 0.95rem;
+  font-weight: 700;
+  outline: none;
+}
+
+/* Botones icono pequeños (lápiz, check, X, basura) */
+.top-card__btn-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--color-text-placeholder);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.top-card__btn-icon svg {
+  width: 13px;
+  height: 13px;
+  pointer-events: none;
+}
+
+/* Lápiz (renombrar) */
+.top-card__btn-rename:hover {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: var(--color-border);
+  color: var(--color-text-primary);
+}
+
+/* Check (confirmar rename) */
+.top-card__btn-rename-ok:hover {
+  background: rgba(34, 197, 94, 0.15);
+  border-color: rgba(34, 197, 94, 0.4);
+  color: #22C55E;
+}
+
+/* X (cancelar rename) */
+.top-card__btn-rename-cancel:hover {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: var(--color-border);
+  color: var(--color-text-primary);
+}
+
+/* Basura (eliminar top completo) */
+.top-card__btn-delete {
+  margin-left: auto;
+}
+
+.top-card__btn-delete:hover {
+  background: rgba(231, 0, 11, 0.15);
+  border-color: rgba(231, 0, 11, 0.4);
+  color: var(--color-brand);
 }
