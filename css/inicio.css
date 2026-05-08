@@ -4,13 +4,20 @@
 
 
 /* ── HERO ── */
+#site-main {
+  max-width: 1280px;
+  margin: 0 auto;
+  width: 100%;
+  padding: 0 48px;
+  box-sizing: border-box;
+}
 .hero {
   display: grid;
   grid-template-columns: 1fr 1fr;
   align-items: center;
   gap: 0;
   min-height: 520px;
-  padding: 56px 48px;
+  padding: 56px 0;
   position: relative;
   overflow: hidden;
 }
@@ -197,7 +204,7 @@
   display: flex;
   flex-direction: column;
   gap: 0;
-  padding: 0 48px 64px;
+  padding: 0 0 64px;
 }
 
 

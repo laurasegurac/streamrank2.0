@@ -154,7 +154,7 @@
 
 .ml-card:hover {
   border-color: var(--color-border-hover);
-  background: rgba(15, 23, 43, 0.95);
+  border-color: rgba(231, 0, 11, 0.45);
 }
 
 /* Imagen */
@@ -263,14 +263,15 @@
 
 /* Primario — "Ya lo vi" */
 .ml-btn--primary {
-  background: rgba(231, 0, 11, 0.12);
-  color: var(--color-brand);
-  border-color: rgba(231, 0, 11, 0.25);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--color-text-muted);
+  border-color: var(--color-border);
+
 }
 
 .ml-btn--primary:hover {
-  background: rgba(231, 0, 11, 0.22);
-  border-color: rgba(231, 0, 11, 0.45);
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--color-text-primary);
 }
 
 /* Ghost — "Eliminar" */
@@ -281,8 +282,11 @@
 }
 
 .ml-btn--ghost:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: var(--color-text-primary);
+  
+  background: rgba(231, 0, 11, 0.22);
+  border-color: rgba(231, 0, 11, 0.45);
+  color: var(--color-brand);
+  
 }
 
 
@@ -297,7 +301,7 @@
   transition: border-color 0.18s;
 }
 
-.hist-card:hover { border-color: var(--color-border-hover); }
+.hist-card:hover { border-color: rgba(231, 0, 11, 0.45); }
 
 /* Parte superior */
 .hist-card__top {

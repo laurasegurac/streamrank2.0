@@ -377,11 +377,9 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
     font-size: var(--text-xs);
   }
 }
-
 @media (max-width: 480px) {
   .header-inner { padding: 0 var(--space-sm); }
   .header-logo__wordmark { display: none; }
-  .nav-link-text { display: none; }
-  .nav-link { padding: var(--space-xs) var(--space-sm); }
+  .nav-link { padding: var(--space-xs) var(--space-sm); font-size: 10px; }
   .nav-link__icon { opacity: 1; }
 }
