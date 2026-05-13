@@ -119,29 +119,35 @@ const AuthModal = (function () {
 
     submitBtn.disabled    = true;
     submitBtn.textContent = 'Procesando…';
+    // Quitar el setTimeout y usar async/await
+(async () => {
+  const result = mode === 'login'
+    ? await Auth.login(email, password)
+    : await Auth.register(email, password);
 
-    setTimeout(() => {
-      const result = mode === 'login'
-        ? Auth.login(email, password)
-        : Auth.register(email, password);
+  submitBtn.disabled = false;
+  setMode(mode);
 
-      submitBtn.disabled = false;
-      setMode(mode);
+  if (!result.ok) { showError(result.error); return; }
 
-      if (!result.ok) { showError(result.error); return; }
+  close();
+  Auth.updateHeaderUI();
+  window.dispatchEvent(new CustomEvent('auth:changed', { detail: { user: result.user } }));
 
-      close();
-      Auth.updateHeaderUI();
-      window.dispatchEvent(new CustomEvent('auth:changed', { detail: { user: result.user } }));
+  if (typeof pendingAction === 'function') pendingAction(result.user);
 
-      if (typeof pendingAction === 'function') pendingAction(result.user);
+  showToast(
+    mode === 'register'
+      ? `¡Bienvenido, ${result.user.username}!`
+      : `¡Hola de nuevo, ${result.user.username}!`
+  );
+})();
 
-      showToast(
-        mode === 'register'
-          ? `¡Bienvenido, ${result.user.username}!`
-          : `¡Hola de nuevo, ${result.user.username}!`
-      );
-    }, 400);
+
+
+
+
+
   });
 
   toggle.addEventListener('click', () => setMode(mode === 'login' ? 'register' : 'login'));

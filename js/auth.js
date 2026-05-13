@@ -1,17 +1,15 @@
 /* ===================================================
-   AUTH.JS — Lógica central de autenticación
-   Usa localStorage como simulación de backend.
-   Para conectar a Firebase/Supabase: reemplaza las
-   funciones auth_login, auth_register y auth_logout.
+   AUTH.JS — Conectado al backend Node.js
+   API: http://localhost:3000
 =================================================== */
 
 const Auth = (function () {
   'use strict';
 
-  const USER_KEY = 'streamrank_user';
-  const USERS_KEY = 'streamrank_users'; // "base de datos" simulada
+  const USER_KEY  = 'streamrank_user';
+  const API_URL   = 'http://localhost:3000';
 
-  /* ── OBTENER USUARIO ACTUAL ── */
+  /* ── OBTENER USUARIO ACTUAL (sesión local) ── */
   function getUser() {
     try {
       const raw = localStorage.getItem(USER_KEY);
@@ -24,57 +22,62 @@ const Auth = (function () {
     localStorage.setItem(USER_KEY, JSON.stringify(user));
   }
 
-  /* ── OBTENER TODOS LOS USUARIOS REGISTRADOS ── */
-  function getUsers() {
+  /* ── LOGIN → POST /api/login ── */
+  async function login(email, password) {
     try {
-      const raw = localStorage.getItem(USERS_KEY);
-      return raw ? JSON.parse(raw) : [];
-    } catch { return []; }
-  }
+      const res  = await fetch(`${API_URL}/api/login`, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ email: email.toLowerCase(), password }),
+      });
 
-  function saveUsers(users) {
-    localStorage.setItem(USERS_KEY, JSON.stringify(users));
-  }
+      const data = await res.json();
 
-  /* ── LOGIN ───────────────────────────────────────
-     Retorna { ok: true, user } o { ok: false, error }
-     → Para backend: reemplaza con fetch('/api/login')
-  ─────────────────────────────────────────────────*/
-  function login(email, password) {
-    const users = getUsers();
-    const user = users.find(u => u.email === email.toLowerCase());
+      if (!data.ok) return { ok: false, error: data.error || 'Error al iniciar sesión.' };
 
-    if (!user) return { ok: false, error: 'No existe una cuenta con ese correo.' };
-    if (user.password !== password) return { ok: false, error: 'Contraseña incorrecta.' };
+      const sessionUser = {
+        id:       data.data.id,
+        username: data.data.username,
+        email:    data.data.email,
+        photoUrl: '',
+      };
+      setUser(sessionUser);
+      return { ok: true, user: sessionUser };
 
-    const sessionUser = { id: user.id, username: user.username, email: user.email, photoUrl: user.photoUrl || '' };
-    setUser(sessionUser);
-    return { ok: true, user: sessionUser };
-  }
-
-  /* ── REGISTRO ────────────────────────────────────
-     → Para backend: reemplaza con fetch('/api/register')
-  ─────────────────────────────────────────────────*/
-  function register(email, password) {
-    const users = getUsers();
-    if (users.find(u => u.email === email.toLowerCase())) {
-      return { ok: false, error: 'Ya existe una cuenta con ese correo.' };
+    } catch (err) {
+      return { ok: false, error: 'No se pudo conectar al servidor. ¿Está corriendo el back?' };
     }
+  }
 
-    const newUser = {
-      id:       Math.random().toString(36).slice(2, 11),
-      email:    email.toLowerCase(),
-      username: email.split('@')[0],
-      password, // ⚠️ solo simulación — en backend nunca guardes la contraseña en plano
-      photoUrl: '',
-    };
+  /* ── REGISTRO → POST /api/users ── */
+  async function register(email, password) {
+    try {
+      const res  = await fetch(`${API_URL}/api/users`, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({
+          email:    email.toLowerCase(),
+          password,
+          username: email.split('@')[0],
+        }),
+      });
 
-    users.push(newUser);
-    saveUsers(users);
+      const data = await res.json();
 
-    const sessionUser = { id: newUser.id, username: newUser.username, email: newUser.email, photoUrl: '' };
-    setUser(sessionUser);
-    return { ok: true, user: sessionUser };
+      if (!data.ok) return { ok: false, error: data.error || 'Error al registrarse.' };
+
+      const sessionUser = {
+        id:       data.data.id,
+        username: data.data.username,
+        email:    data.data.email,
+        photoUrl: '',
+      };
+      setUser(sessionUser);
+      return { ok: true, user: sessionUser };
+
+    } catch (err) {
+      return { ok: false, error: 'No se pudo conectar al servidor. ¿Está corriendo el back?' };
+    }
   }
 
   /* ── LOGOUT ── */
@@ -82,36 +85,46 @@ const Auth = (function () {
     localStorage.removeItem(USER_KEY);
   }
 
-  /* ── ACTUALIZAR PERFIL ── */
-  function updateProfile({ username, photoUrl, newPassword }) {
+  /* ── ACTUALIZAR PERFIL → PUT /api/users/:id ── */
+  async function updateProfile({ username, photoUrl, newPassword }) {
     const current = getUser();
     if (!current) return { ok: false, error: 'No hay sesión activa.' };
 
-    const users = getUsers();
-    const idx = users.findIndex(u => u.id === current.id);
-    if (idx === -1) return { ok: false, error: 'Usuario no encontrado.' };
+    try {
+      const body = {};
+      if (username)    body.username = username;
+      if (newPassword) body.password = newPassword;
+      if (photoUrl !== undefined) body.photoUrl = photoUrl;
 
-    if (username)  users[idx].username = username;
-    if (photoUrl !== undefined) users[idx].photoUrl = photoUrl;
-    if (newPassword) users[idx].password = newPassword;
+      const res  = await fetch(`${API_URL}/api/users/${current.id}`, {
+        method:  'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify(body),
+      });
 
-    saveUsers(users);
+      const data = await res.json();
+      if (!data.ok) return { ok: false, error: data.error };
 
-    const updated = { ...current, username: users[idx].username, photoUrl: users[idx].photoUrl };
-    setUser(updated);
-    return { ok: true, user: updated };
+      const updated = {
+        ...current,
+        username: data.data.username || current.username,
+        photoUrl: photoUrl !== undefined ? photoUrl : current.photoUrl,
+      };
+      setUser(updated);
+      return { ok: true, user: updated };
+
+    } catch (err) {
+      return { ok: false, error: 'No se pudo conectar al servidor.' };
+    }
   }
 
-  /* ── ACTUALIZAR HEADER SEGÚN SESIÓN ─────────────
-     Llama esta función en cada página al cargar.
-  ─────────────────────────────────────────────────*/
+  /* ── ACTUALIZAR HEADER SEGÚN SESIÓN ── */
   function updateHeaderUI() {
-    const user = getUser();
+    const user   = getUser();
     const btnCta = document.querySelector('.btn-cta');
     if (!btnCta) return;
 
     if (user) {
-      /* Reemplazar botón "Ingresar" por avatar + nombre + logout */
       const initial = (user.username || user.email).charAt(0).toUpperCase();
       btnCta.outerHTML = `
         <div class="header-user" id="headerUser">
@@ -138,7 +151,6 @@ const Auth = (function () {
         window.location.reload();
       });
     }
-    /* Si no hay sesión, el botón "Ingresar" queda como está */
   }
 
   /* API pública */
