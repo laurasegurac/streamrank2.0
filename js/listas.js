@@ -1,86 +1,186 @@
 /* ===================================================
-   LISTAS.JS
-   Maneja el botón .btn-save desde CUALQUIER página.
-   Se incluye en index.html, top-lista.html, etc.
-   junto a auth.js y auth-modal.js.
+   LISTAS.JS — Conectado al backend
+   verDespues e historial → DB via API
+   tops → localStorage (datos complejos)
 =================================================== */
 
 (function () {
   'use strict';
 
-  /* ── STORAGE ── */
-  function getKey() {
+  const API_URL = 'http://localhost:3000';
+
+  /* ── Tops: siguen en localStorage ── */
+  function getTopsKey() {
     const user = Auth.getUser();
-    return user ? `streamrank_listas_${user.id}` : null;
+    return user ? `streamrank_tops_${user.id}` : null;
   }
 
-  function loadData() {
-    const key = getKey();
-    if (!key) return { verDespues: [], historial: [], tops: [] };
+  function loadTops() {
+    const key = getTopsKey();
+    if (!key) return [];
+    try { return JSON.parse(localStorage.getItem(key) || '[]'); }
+    catch { return []; }
+  }
+
+  function saveTops(tops) {
+    const key = getTopsKey();
+    if (key) localStorage.setItem(key, JSON.stringify(tops));
+  }
+
+  /* ── Cache en memoria para evitar fetch repetidos ── */
+  let _cache = { verDespues: [], historial: [] };
+  let _cacheLoaded = false;
+
+  async function fetchLists() {
+    const user = Auth.getUser();
+    if (!user) return { verDespues: [], historial: [] };
     try {
-      const raw = localStorage.getItem(key);
-      const d   = raw ? JSON.parse(raw) : {};
-      return {
-        verDespues: d.verDespues || d.agregados || [],
-        historial:  d.historial  || [],
-        tops:       d.tops       || [],
-      };
-    } catch { return { verDespues: [], historial: [], tops: [] }; }
-  }
-
-  function saveData(data) {
-    const key = getKey();
-    if (!key) return;
-    localStorage.setItem(key, JSON.stringify(data));
+      const res  = await fetch(`${API_URL}/api/lists/${user.id}`);
+      const data = await res.json();
+      if (data.ok) {
+        _cache = data.data;
+        _cacheLoaded = true;
+      }
+      return _cache;
+    } catch {
+      return _cache;
+    }
   }
 
   /* ── API PÚBLICA ── */
   window.Listas = {
 
-    guardar(item) {
-      const data = loadData();
-      if (data.historial.find(i => i.id === item.id)) return 'historial';
-      if (data.verDespues.find(i => i.id === item.id)) return 'duplicado';
-      data.verDespues.push(item);
-      saveData(data);
-      return 'ok';
+    /* Cargar listas del servidor */
+    async cargar() {
+      return await fetchLists();
     },
 
-    // NUEVO: quitar de verDespues
-    quitar(id) {
-      const data = loadData();
-      const estaba = !!data.verDespues.find(i => i.id === id);
-      if (!estaba) return false;
-      data.verDespues = data.verDespues.filter(i => i.id !== id);
-      saveData(data);
-      return true;
+    /* Guardar en watchlist */
+    async guardar(item) {
+      const user = Auth.getUser();
+      if (!user) return 'no-auth';
+
+      // Revisar cache
+      if (_cache.historial.find(i => i.id === item.id)) return 'historial';
+      if (_cache.verDespues.find(i => i.id === item.id)) return 'duplicado';
+
+      try {
+        const res  = await fetch(`${API_URL}/api/lists`, {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ userId: user.id, movieId: item.id, status: 'watchlist' }),
+        });
+        const data = await res.json();
+        if (data.ok) {
+          _cache.verDespues.push(item);
+          return 'ok';
+        }
+        return 'error';
+      } catch { return 'error'; }
+    },
+
+    /* Quitar de watchlist */
+    async quitar(id) {
+      const user = Auth.getUser();
+      if (!user) return false;
+      try {
+        const res = await fetch(`${API_URL}/api/lists/${user.id}/${id}`, { method: 'DELETE' });
+        const data = await res.json();
+        if (data.ok) {
+          _cache.verDespues = _cache.verDespues.filter(i => i.id !== id);
+          return true;
+        }
+        return false;
+      } catch { return false; }
+    },
+
+    /* Mover a historial */
+    async moverAHistorial(id, extraData = {}) {
+      const user = Auth.getUser();
+      if (!user) return false;
+
+      const fechaHoy = new Date().toLocaleDateString('es-CO', { day:'numeric', month:'numeric', year:'numeric' });
+
+      try {
+        // Actualizar status a 'watched' + datos extra
+        const res = await fetch(`${API_URL}/api/lists/${user.id}/${id}`, {
+          method:  'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ status: 'watched', fechaVisto: fechaHoy, ...extraData }),
+        });
+        const data = await res.json();
+        if (data.ok) {
+          const item = _cache.verDespues.find(i => i.id === id);
+          if (item) {
+            _cache.historial.unshift({ ...item, status: 'watched', fechaVisto: fechaHoy, ...extraData });
+            _cache.verDespues = _cache.verDespues.filter(i => i.id !== id);
+          }
+          return true;
+        }
+        return false;
+      } catch { return false; }
+    },
+
+    /* Actualizar campo del historial (rating, nota, liked, etc.) */
+    async actualizarHistorial(id, updates) {
+      const user = Auth.getUser();
+      if (!user) return false;
+      try {
+        const res = await fetch(`${API_URL}/api/lists/${user.id}/${id}`, {
+          method:  'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify(updates),
+        });
+        const data = await res.json();
+        if (data.ok) {
+          const idx = _cache.historial.findIndex(i => i.id === id);
+          if (idx !== -1) _cache.historial[idx] = { ..._cache.historial[idx], ...updates };
+          return true;
+        }
+        return false;
+      } catch { return false; }
+    },
+
+    /* Eliminar del historial */
+    async eliminarDeHistorial(id) {
+      const user = Auth.getUser();
+      if (!user) return false;
+      try {
+        const res  = await fetch(`${API_URL}/api/lists/${user.id}/${id}`, { method: 'DELETE' });
+        const data = await res.json();
+        if (data.ok) {
+          _cache.historial = _cache.historial.filter(i => i.id !== id);
+          return true;
+        }
+        return false;
+      } catch { return false; }
     },
 
     estaGuardado(id) {
-      const data = loadData();
-      return !!(data.verDespues.find(i => i.id === id) ||
-                data.historial.find(i => i.id === id));
+      return !!(_cache.verDespues.find(i => i.id === id) || _cache.historial.find(i => i.id === id));
     },
 
     estaEnHistorial(id) {
-      const data = loadData();
-      return !!data.historial.find(i => i.id === id);
+      return !!_cache.historial.find(i => i.id === id);
     },
 
-    loadData,
-    saveData,
+    getCache() { return _cache; },
+
+    /* Tops siguen en localStorage */
+    loadTops,
+    saveTops,
   };
 
-  /* ── Marcar botones ya guardados al cargar ── */
-  function sincronizarBotones() {
+  /* ── Sincronizar botones al cargar ── */
+  async function sincronizarBotones() {
     if (!Auth.getUser()) return;
+    await fetchLists();
     document.querySelectorAll('[data-item-id]').forEach(li => {
       const id  = li.dataset.itemId;
       const btn = li.querySelector('.btn-save');
       if (!btn || !id) return;
 
       if (window.Listas.estaEnHistorial(id)) {
-        // En historial: queda marcado pero sin poder quitar
         btn.classList.add('is-saved', 'is-history');
         btn.setAttribute('aria-pressed', 'true');
         btn.setAttribute('title', 'Ya está en tu historial');
@@ -98,39 +198,37 @@
 
   sincronizarBotones();
 
-  /* ── Click en btn-save: TOGGLE guardar / quitar ── */
-  document.addEventListener('click', e => {
+  /* ── Click en btn-save ── */
+  document.addEventListener('click', async e => {
     const saveBtn = e.target.closest('.btn-save');
     if (!saveBtn) return;
 
     const user = Auth.getUser();
-    if (!user) return; // auth-modal.js lo intercepta antes
+    if (!user) return;
 
     const li = saveBtn.closest('[data-item-id]');
     if (!li) return;
 
     const itemId = li.dataset.itemId;
 
-    // Si ya está en historial no se puede quitar desde aquí
     if (window.Listas.estaEnHistorial(itemId)) {
       showToast('Ya está en tu Historial');
       return;
     }
 
-    // TOGGLE: si ya está guardado → quitar; si no → guardar
     if (window.Listas.estaGuardado(itemId)) {
-      window.Listas.quitar(itemId);
-      saveBtn.classList.remove('is-saved');
-      saveBtn.setAttribute('aria-pressed', 'false');
-      saveBtn.setAttribute('title', 'Guardar en Ver después');
-      const title = extraerTitulo(li);
-      showToast(`"${title}" quitado de Ver después`);
+      const ok = await window.Listas.quitar(itemId);
+      if (ok) {
+        saveBtn.classList.remove('is-saved');
+        saveBtn.setAttribute('aria-pressed', 'false');
+        saveBtn.setAttribute('title', 'Guardar en Ver después');
+        showToast(`"${extraerTitulo(li)}" quitado de Ver después`);
+      }
       return;
     }
 
-    // Guardar: extraer datos de la tarjeta
     const item = extraerItem(li, itemId);
-    const resultado = window.Listas.guardar(item);
+    const resultado = await window.Listas.guardar(item);
 
     if (resultado === 'ok') {
       saveBtn.classList.add('is-saved');
@@ -139,67 +237,42 @@
       showToast(`"${item.title}" agregado a Ver después`);
     } else if (resultado === 'duplicado') {
       showToast(`"${item.title}" ya está en tu lista`);
-    } else {
+    } else if (resultado === 'historial') {
       showToast(`"${item.title}" ya está en tu Historial`);
     }
   });
 
-  /* ── Extraer datos de la tarjeta (compatible con index.html y top-lista.html) ── */
   function extraerItem(li, itemId) {
     const card = li.querySelector('.card') || li;
     return {
       id:       itemId,
-      title:    (card.querySelector('.card__title') || card.querySelector('.info-title'))
-                  ?.textContent?.trim() || '',
-      type:     (card.querySelector('.card__type')  || card.querySelector('.tag-type'))
-                  ?.textContent?.trim() || '',
-      genres:   (card.querySelector('.card__genres')|| card.querySelector('.tag-genre'))
-                  ?.textContent?.replace('•','')?.trim() || '',
-      rating:   (card.querySelector('.card__rating')|| card.querySelector('.rating-text'))
-                  ?.textContent?.replace(/[^\d.]/g, '')?.trim() || '',
-      desc:     (card.querySelector('.card__desc')  || card.querySelector('.info-desc'))
-                  ?.textContent?.trim() || '',
-      img:      (card.querySelector('.card__thumb img') || card.querySelector('.card-image'))
-                  ?.src || '',
-      platform: (card.querySelector('.platform-badge') || card.querySelector('.tag-platform'))
-                  ?.textContent?.trim() || '',
+      title:    (card.querySelector('.card__title') || card.querySelector('.info-title'))?.textContent?.trim() || '',
+      type:     (card.querySelector('.card__type')  || card.querySelector('.tag-type'))?.textContent?.trim() || '',
+      genres:   (card.querySelector('.card__genres')|| card.querySelector('.tag-genre'))?.textContent?.replace('•','')?.trim() || '',
+      rating:   (card.querySelector('.card__rating')|| card.querySelector('.rating-text'))?.textContent?.replace(/[^\d.]/g, '')?.trim() || '',
+      desc:     (card.querySelector('.card__desc')  || card.querySelector('.info-desc'))?.textContent?.trim() || '',
+      img:      (card.querySelector('.card__thumb img') || card.querySelector('.card-image'))?.src || '',
+      platform: (card.querySelector('.platform-badge') || card.querySelector('.tag-platform'))?.textContent?.trim() || '',
     };
   }
 
   function extraerTitulo(li) {
     const card = li.querySelector('.card') || li;
-    return (card.querySelector('.card__title') || card.querySelector('.info-title'))
-             ?.textContent?.trim() || 'Elemento';
+    return (card.querySelector('.card__title') || card.querySelector('.info-title'))?.textContent?.trim() || 'Elemento';
   }
 
-  /* ── Toast ── */
   function showToast(msg) {
     let t = document.getElementById('listasToast');
     if (!t) {
       t = document.createElement('div');
       t.id = 'listasToast';
-      t.style.cssText = `
-        position:fixed;bottom:28px;left:50%;
-        transform:translateX(-50%) translateY(20px);
-        background:#0F172B;border:1px solid rgba(255,255,255,0.12);
-        color:#fff;font-size:14px;font-weight:600;
-        padding:12px 24px;border-radius:9999px;
-        box-shadow:0 8px 24px rgba(0,0,0,0.4);
-        z-index:700;opacity:0;
-        transition:opacity 0.25s,transform 0.25s;
-        font-family:var(--font-main);white-space:nowrap;`;
+      t.style.cssText = `position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(20px);background:#0F172B;border:1px solid rgba(255,255,255,0.12);color:#fff;font-size:14px;font-weight:600;padding:12px 24px;border-radius:9999px;box-shadow:0 8px 24px rgba(0,0,0,0.4);z-index:700;opacity:0;transition:opacity 0.25s,transform 0.25s;font-family:var(--font-main);white-space:nowrap;`;
       document.body.appendChild(t);
     }
     t.textContent = msg;
-    requestAnimationFrame(() => {
-      t.style.opacity = '1';
-      t.style.transform = 'translateX(-50%) translateY(0)';
-    });
+    requestAnimationFrame(() => { t.style.opacity='1'; t.style.transform='translateX(-50%) translateY(0)'; });
     clearTimeout(t._timer);
-    t._timer = setTimeout(() => {
-      t.style.opacity = '0';
-      t.style.transform = 'translateX(-50%) translateY(10px)';
-    }, 2800);
+    t._timer = setTimeout(() => { t.style.opacity='0'; t.style.transform='translateX(-50%) translateY(10px)'; }, 2800);
   }
 
 })();
