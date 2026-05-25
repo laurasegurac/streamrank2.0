@@ -113,19 +113,26 @@
         </article>
       </li>`;
   }
-
   function actualizarHero(item) {
-    if (!item) return;
-    const badge  = document.querySelector('.hero__badge');
-    const titulo = document.querySelector('.hero__title');
-    const desc   = document.querySelector('.hero__desc');
-    const img    = document.querySelector('.hero__bg img');
+  if (!item) return;
+  const badge  = document.querySelector('.hero__badge');
+  const titulo = document.querySelector('.hero__title');
+  const desc   = document.querySelector('.hero__desc');
+  const img    = document.querySelector('.hero__bg img');
+  const btnTrailer = document.querySelector('.btn-hero-primary');
+  const btnGuardar = document.querySelector('.btn-hero-secondary');
 
-    if (badge)  badge.innerHTML  = `<img src="assets/icons/Estrella.svg" alt="" class="hero__badge-icon" /> #1 Global · ${item.type}`;
-    if (titulo) titulo.textContent = item.title;
-    if (desc)   desc.textContent   = item.desc;
-    if (img)    img.src            = item.img;
-  }
+  if (badge)  badge.innerHTML    = `<img src="assets/icons/Estrella.svg" alt="" class="hero__badge-icon" /> #1 Global · ${item.type}`;
+  if (titulo) titulo.textContent = item.title;
+  if (desc)   desc.textContent   = item.desc;
+  if (img)    img.src            = item.img;
+
+  // Guardar el ID real en los botones
+  if (btnTrailer) btnTrailer.dataset.heroId = item.id;
+  if (btnGuardar) btnGuardar.dataset.heroId = item.id;
+}
+
+
 
   function render() {
     const visible = ITEMS.filter(matches);

@@ -5,128 +5,7 @@
 (function () {
   'use strict';
 
-  const DATA = {
-    'breaking-bad': {
-      title:      'Breaking Bad',
-      type:       'Serie',
-      genres:     'Crime, Drama',
-      rating:     '9.5',
-      duration:   '3 Temporadas',
-      platform:   'Transmisión en Netflix',
-      platformBadge: 'NETFLIX',
-      desc:       'Un profesor de química diagnosticado con cáncer terminal decide fabricar metanfetamina junto a un ex alumno para asegurar el futuro económico de su familia, mientras su doble vida lo arrastra a un mundo criminal sin retorno.',
-      img:        'https://images.unsplash.com/photo-1604975999044-188783d54fb3?w=800&q=80',
-      trailerUrl: 'https://www.youtube.com/embed/HhesaQXLuRY?autoplay=1',
-    },
-    'game-of-thrones': {
-      title:      'Game of Thrones',
-      type:       'Serie',
-      genres:     'Fantasy, Drama',
-      rating:     '9.3',
-      duration:   '8 Temporadas',
-      platform:   'Transmisión en HBO Max',
-      platformBadge: 'HBO MAX',
-      desc:       'Poderosas familias nobles luchan por el control del Trono de Hierro de los Siete Reinos de Westeros, mientras una antigua amenaza sobrenatural regresa desde más allá del muro del norte.',
-      img:        'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=800&q=80',
-      trailerUrl: 'https://www.youtube.com/embed/KPLWWIOCOOQ?autoplay=1',
-    },
-    'interstellar': {
-      title:      'Interstellar',
-      type:       'Película',
-      genres:     'Action, Sci-Fi',
-      rating:     '9.2',
-      duration:   '169 min',
-      platform:   'Transmisión en HBO Max',
-      platformBadge: 'HBO MAX',
-      desc:       'Un equipo de exploradores viaja a través de un agujero de gusano en los confines del universo para encontrar un nuevo hogar para la humanidad mientras la Tierra se extingue lentamente.',
-      img:        'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=800&q=80',
-      trailerUrl: 'https://www.youtube.com/embed/zSWdZtXT7E?autoplay=1',
-    },
-    'stranger-things': {
-      title:      'Stranger Things',
-      type:       'Serie',
-      genres:     'Sci-Fi, Mystery',
-      rating:     '9.0',
-      duration:   '4 Temporadas',
-      platform:   'Transmisión en Netflix',
-      platformBadge: 'NETFLIX',
-      desc:       'Un grupo de amigos en un pequeño pueblo de Indiana descubre fuerzas sobrenaturales, experimentos secretos del gobierno y una dimensión paralela aterradora que amenaza su mundo.',
-      img:        'https://images.unsplash.com/photo-1535016120720-40c646be5580?w=800&q=80',
-      trailerUrl: 'https://www.youtube.com/embed/b9EkMc79ZSU?autoplay=1',
-    },
-    'the-dark-knight': {
-      title:      'The Dark Knight',
-      type:       'Película',
-      genres:     'Action, Thriller',
-      rating:     '8.9',
-      duration:   '152 min',
-      platform:   'Transmisión en HBO Max',
-      platformBadge: 'HBO MAX',
-      desc:       'Batman enfrenta a su mayor amenaza cuando el Joker, un agente del caos sin escrúpulos, desata el terror en Gotham City con un plan diseñado para destruir todo lo que el Caballero Oscuro representa.',
-      img:        'https://images.unsplash.com/photo-1509347528160-9a9e33742cdb?w=800&q=80',
-      trailerUrl: 'https://www.youtube.com/embed/EXeTwQWrcwY?autoplay=1',
-    },
-    'severance': {
-      title:      'Severance',
-      type:       'Serie',
-      genres:     'Sci-Fi, Thriller',
-      rating:     '8.7',
-      duration:   '2 Temporadas',
-      platform:   'Transmisión en Apple TV+',
-      platformBadge: 'APPLE TV+',
-      desc:       'Empleados de la misteriosa corporación Lumon se someten a un procedimiento quirúrgico que separa completamente sus recuerdos laborales de los personales, sin saber qué ocurre en la otra mitad de su vida.',
-      img:        'https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&q=80',
-      trailerUrl: 'https://www.youtube.com/embed/xEQP4VVuyrY?autoplay=1',
-    },
-    'dune': {
-      title:      'Dune: Parte Uno',
-      type:       'Película',
-      genres:     'Sci-Fi, Adventure',
-      rating:     '8.5',
-      duration:   '155 min',
-      platform:   'Transmisión en HBO Max',
-      platformBadge: 'HBO MAX',
-      desc:       'Paul Atreides, un joven noble, viaja al planeta más peligroso del universo para asegurar el futuro de su familia y su pueblo, heredando el destino de quienes controlan la especia más valiosa de la galaxia.',
-      img:        'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80',
-      trailerUrl: 'https://www.youtube.com/embed/8g18jFHCLXk?autoplay=1',
-    },
-    'the-boys': {
-      title:      'The Boys',
-      type:       'Serie',
-      genres:     'Action, Comedy',
-      rating:     '8.4',
-      duration:   '4 Temporadas',
-      platform:   'Transmisión en Amazon Prime',
-      platformBadge: 'PRIME',
-      desc:       'Un grupo de vigilantes sin poderes decide enfrentarse a un equipo de superhéroes corrompidos por la fama y el poder, respaldados por una megacorporación que los usa como herramienta de control.',
-      img:        'https://images.unsplash.com/photo-1531259683007-016a7b628fc3?w=800&q=80',
-      trailerUrl: 'https://www.youtube.com/embed/M1bhOaLV4FU?autoplay=1',
-    },
-    'invincible': {
-      title:      'Invincible',
-      type:       'Serie',
-      genres:     'Animation, Action',
-      rating:     '8.3',
-      duration:   '2 Temporadas',
-      platform:   'Transmisión en Amazon Prime',
-      platformBadge: 'PRIME',
-      desc:       'Mark Grayson es un adolescente normal cuyo padre es el superhéroe más poderoso del planeta. Al heredar sus poderes, descubre que la verdad detrás del legado familiar es mucho más oscura de lo que esperaba.',
-      img:        'https://images.unsplash.com/photo-1612036782180-6f0b6cd846fe?w=800&q=80',
-      trailerUrl: 'https://www.youtube.com/embed/4RLSjBmkGT4?autoplay=1',
-    },
-    'dark': {
-      title:      'Dark',
-      type:       'Serie',
-      genres:     'Sci-Fi, Mystery',
-      rating:     '8.2',
-      duration:   '3 Temporadas',
-      platform:   'Transmisión en Netflix',
-      platformBadge: 'NETFLIX',
-      desc:       'Cuatro familias interconectadas de un pequeño pueblo alemán se ven arrastradas a una conspiración que involucra viajes en el tiempo, paradojas imposibles y ciclos que se repiten a lo largo de décadas.',
-      img:        'https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=800&q=80',
-      trailerUrl: 'https://www.youtube.com/embed/rrwycJ08PSA?autoplay=1',
-    },
-  };
+    const API_URL = 'http://localhost:3000';
 
   /* ── CREAR MODAL EN EL DOM ── */
   const modalHTML = `
@@ -229,7 +108,8 @@
 
   /* ── ABRIR MODAL ── */
   function openModal(itemId) {
-    const d = DATA[itemId] || buildCardFallback(itemId);
+    const dataItem = typeof DATA !== 'undefined' ? DATA[itemId] : undefined;
+    const d = dataItem || buildCardFallback(itemId);
     if (!d) return;
 
     currentItemId     = itemId;
@@ -399,39 +279,52 @@
   });
 
   /* ── BOTÓN HERO "Añadir a la lista" ── */
-  document.addEventListener('click', e => {
-    const heroBtn = e.target.closest('.btn-hero-secondary');
-    if (!heroBtn) return;
+  // Reemplaza el listener de .btn-hero-primary:
+document.addEventListener('click', e => {
+  const btn = e.target.closest('.btn-hero-primary');
+  if (!btn) return;
+  e.preventDefault();
+  const heroId = btn.dataset.heroId;
+  if (heroId) openModal(heroId);
+  else openModal('breaking-bad'); // fallback
+});
 
-    // Si no hay sesión → abrir auth modal
-    if (!Auth.getUser()) {
-      AuthModal.open('login');
-      return;
-    }
+// Reemplaza el listener de .btn-hero-secondary:
+document.addEventListener('click', e => {
+  const btn = e.target.closest('.btn-hero-secondary');
+  if (!btn) return;
 
-    // Guardar Breaking Bad (el #1 del hero) como ejemplo
-    const heroItemId = 'breaking-bad';
-    const d = DATA[heroItemId];
-    if (!d) return;
+  if (!Auth.getUser()) {
+    AuthModal.open('login');
+    return;
+  }
 
-    if (window.Listas && window.Listas.estaGuardado(heroItemId)) {
-      window.Listas.quitar(heroItemId);
-      heroBtn.innerHTML = '<img src="assets/icons/agregar.svg" alt="" class="btn-icon" /> Añadir a la lista';
-      heroBtn.classList.remove('is-saved');
-      showToast(`"${d.title}" quitado de Ver después`);
-    } else if (window.Listas) {
-      const resultado = window.Listas.guardar({
-        id: heroItemId, title: d.title, type: d.type,
-        genres: d.genres, rating: d.rating, desc: d.desc,
-        img: d.img, platform: d.platformBadge,
-      });
-      if (resultado === 'ok') {
-        heroBtn.innerHTML = '<img src="assets/icons/agregada.svg" alt="" class="btn-icon" /> Añadido ✓';
-        heroBtn.classList.add('is-saved');
-        showToast(`"${d.title}" agregado a Ver después`);
-      }
-    }
-  });
+  const heroId = btn.dataset.heroId;
+  if (!heroId) return;
+
+  // Buscar el item en _ITEMS
+  const item = window._ITEMS?.find(i => i.id === heroId);
+  if (!item) return;
+
+  if (window.Listas && window.Listas.estaGuardado(heroId)) {
+    window.Listas.quitar(heroId);
+    btn.innerHTML = '<img src="assets/icons/agregar.svg" alt="" class="btn-icon" /> Añadir a la lista';
+    btn.classList.remove('is-saved');
+  } else if (window.Listas) {
+    window.Listas.guardar({
+      id:       item.id,
+      title:    item.title,
+      type:     item.type,
+      genres:   Array.isArray(item.genres) ? item.genres.join(', ') : item.genres,
+      rating:   String(item.rating),
+      desc:     item.desc,
+      img:      item.img,
+      platform: item.platform,
+    });
+    btn.innerHTML = '<img src="assets/icons/agregada.svg" alt="" class="btn-icon" /> Añadido ✓';
+    btn.classList.add('is-saved');
+  }
+});
 
   /* ── TOAST ── */
   function showToast(msg) {
