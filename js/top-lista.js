@@ -54,7 +54,6 @@
   const sortBtns    = document.querySelectorAll('.sort-btn');
 
   let ITEMS = []; // datos del back
-  window._ITEMS = ITEMS; // ← agrega esta línea
   render();
 
   /* ── HELPERS ── */
@@ -66,6 +65,13 @@
     if (mins <= 120) return 'medium';
     return 'long';
   }
+  function normalizar(str) {
+  return str
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, ''); // quita tildes
+  }
+
 
   function matches(item) {
     const tipo = (item.type || '').toLowerCase();
@@ -74,9 +80,9 @@
 
     if (state.genre) {
       const generos = Array.isArray(item.genres)
-        ? item.genres.map(g => g.toLowerCase())
-        : [String(item.genres || '').toLowerCase()];
-      if (!generos.some(g => g.includes(state.genre))) return false;
+        ? item.genres.map(g => normalizar(g))
+        : [normalizar(String(item.genres || ''))];
+      if (!generos.some(g => g.includes(normalizar(state.genre)))) return false;
     }
 
     if (state.duration) {
@@ -85,7 +91,12 @@
     }
 
     return true;
-  }
+    }
+
+
+
+
+  
 
   function cardHTML(item, rank) {
     const generosTxt = Array.isArray(item.genres)
@@ -163,6 +174,7 @@
         const todos = Object.values(data).flat();
         ITEMS = todos.filter(i => i.categoria === categoria);
       }
+      window._ITEMS = ITEMS;
 
       render();
     } catch (err) {
