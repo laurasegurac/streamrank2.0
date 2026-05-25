@@ -261,23 +261,31 @@
     document.body.style.overflow = 'hidden';
     closeBtn.focus();
   }
-
   function buildCardFallback(itemId) {
-    const li = document.querySelector(`li[data-item-id="${itemId}"]`);
-    if (!li) return null;
-    return {
-      title:    li.querySelector('.card__title')?.textContent?.trim()    || '',
-      type:     li.querySelector('.card__type')?.textContent?.trim()     || '',
-      genres:   li.querySelector('.card__genres')?.textContent?.trim()   || '',
-      rating:   li.querySelector('.card__rating')?.textContent?.replace(/[^\d.]/g,'')?.trim() || '',
-      duration: '',
-      platform: li.querySelector('.platform-badge')?.textContent?.trim() || '',
-      platformBadge: li.querySelector('.platform-badge')?.textContent?.trim() || '',
-      desc:     li.querySelector('.card__desc')?.textContent?.trim()     || '',
-      img:      li.querySelector('.card__thumb img')?.src                || '',
-      trailerUrl: '',
-    };
+  const li = document.querySelector(`li[data-item-id="${itemId}"]`);
+  if (!li) return null;
+
+  // Buscar trailer en los datos cargados (top-lista.js los guarda en ITEMS)
+  let trailerUrl = '';
+  if (window._ITEMS) {
+    const found = window._ITEMS.find(i => i.id === itemId);
+    if (found) trailerUrl = found.trailer || '';
   }
+
+  return {
+    title:       li.querySelector('.card__title')?.textContent?.trim()    || '',
+    type:        li.querySelector('.card__type')?.textContent?.trim()     || '',
+    genres:      li.querySelector('.card__genres')?.textContent?.trim()   || '',
+    rating:      li.querySelector('.card__rating')?.textContent?.replace(/[^\d.]/g,'')?.trim() || '',
+    duration:    li.querySelector('.card__duration')?.textContent?.trim() || '',
+    platform:    li.querySelector('.platform-badge')?.textContent?.trim() || '',
+    platformBadge: li.querySelector('.platform-badge')?.textContent?.trim() || '',
+    desc:        li.querySelector('.card__desc')?.textContent?.trim()     || '',
+    img:         li.querySelector('.card__thumb img')?.src                || '',
+    trailerUrl,
+  };
+}
+
 
   /* ── CERRAR MODAL ── */
   function closeModal() {

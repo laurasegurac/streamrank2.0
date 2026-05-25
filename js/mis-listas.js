@@ -32,23 +32,16 @@
     renderHistorial();
     renderTops();
   }
-
-  const CATALOGO = [
-    { id: 'breaking-bad',    title: 'Breaking Bad',     img: 'https://images.unsplash.com/photo-1604975999044-188783d54fb3?w=92&q=70' },
-    { id: 'game-of-thrones', title: 'Game of Thrones',  img: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=92&q=70' },
-    { id: 'interstellar',    title: 'Interstellar',     img: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=92&q=70' },
-    { id: 'stranger-things', title: 'Stranger Things',  img: 'https://images.unsplash.com/photo-1535016120720-40c646be5580?w=92&q=70' },
-    { id: 'the-dark-knight', title: 'The Dark Knight',  img: 'https://images.unsplash.com/photo-1509347528160-9a9e33742cdb?w=92&q=70' },
-    { id: 'severance',       title: 'Severance',        img: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=92&q=70' },
-    { id: 'dune',            title: 'Dune: Parte Uno',  img: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=92&q=70' },
-    { id: 'the-boys',        title: 'The Boys',         img: 'https://images.unsplash.com/photo-1531259683007-016a7b628fc3?w=92&q=70' },
-    { id: 'invincible',      title: 'Invincible',       img: 'https://images.unsplash.com/photo-1612036782180-6f0b6cd846fe?w=92&q=70' },
-    { id: 'dark',            title: 'Dark',             img: 'https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=92&q=70' },
-    { id: 'inception',       title: 'Inception',        img: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=92&q=70' },
-    { id: 'squid-game',      title: 'Squid Game',       img: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=92&q=70' },
-    { id: 'the-wire',        title: 'The Wire',         img: 'https://images.unsplash.com/photo-1604975999044-188783d54fb3?w=92&q=70' },
-    { id: 'ted-lasso',       title: 'Ted Lasso',        img: 'https://images.unsplash.com/photo-1535016120720-40c646be5580?w=92&q=70' },
-  ];
+  async function cargarCatalogo() {
+  try {
+    const res  = await fetch('http://localhost:3000/api/movies?global=true');
+    const data = await res.json();
+    CATALOGO = Array.isArray(data)
+      ? data.map(m => ({ id: m.id, title: m.title, img: m.img }))
+      : [];
+  } catch { CATALOGO = []; }
+}
+  let CATALOGO = [];
 
   function platformClass(badge) {
     if (!badge) return 'ml-badge--default';
