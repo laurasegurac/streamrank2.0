@@ -338,7 +338,7 @@ if (searchInput) {
           "/>
           <div style="flex:1; min-width:0;">
             <p style="margin:0; font-size:14px; font-weight:600; color:#fff;
-                      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                      display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">
               ${item.title}
             </p>
             <p style="margin:0; font-size:12px; color:#8D95A5;">${item.type} · ${generos}</p>

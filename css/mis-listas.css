@@ -623,7 +623,7 @@
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: 14px;
-  overflow: hidden;
+  overflow: visible;
   display: flex;
   flex-direction: column;
 }
@@ -747,14 +747,14 @@
 /* Dropdown resultados */
 .top-search-resultados {
   position: absolute;
-  bottom: calc(100% - 8px);
+  top: calc(100% - 8px);
   left: 16px;
   right: 16px;
   background: #0F172B;
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 10px;
   overflow: hidden;
-  z-index: 20;
+  z-index: 9999;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
   display: none;
 }
@@ -812,7 +812,12 @@
   .hist-rating-nums { gap: 3px; }
   .hist-rating-btn  { width: 24px; height: 24px; font-size: 10px; }
 
-  .tops-grid { grid-template-columns: 1fr; }
+  .tops-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+  overflow: visible; /* ← agrega esto */
+}
 }
 
 @media (max-width: 480px) {

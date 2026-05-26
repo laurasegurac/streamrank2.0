@@ -31,6 +31,26 @@
     renderVerDespues();
     renderHistorial();
     renderTops();
+
+    // Cargar catálogo completo para búsqueda de tops
+    if (!window.CATALOGO_COMPLETO || !window.CATALOGO_COMPLETO.length) {
+      try {
+        const res  = await fetch('http://localhost:3000/api/movies');
+        const data = await res.json();
+        const vistos = new Set();
+        const todos  = [];
+        const source = Array.isArray(data) ? { all: data } : data;
+        for (const items of Object.values(source)) {
+          for (const item of items) {
+            const key = item.tmdbId || item.id;
+            if (!vistos.has(key)) { vistos.add(key); todos.push(item); }
+          }
+        }
+        window.CATALOGO_COMPLETO = todos;
+      } catch (err) {
+        console.error('Error cargando catálogo para tops:', err);
+      }
+    }
   }
   async function cargarCatalogo() {
   try {
@@ -41,6 +61,11 @@
       : [];
   } catch { CATALOGO = []; }
 }
+
+  function normalizar(str) {
+    return str.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  }
+
   let CATALOGO = [];
 
   function platformClass(badge) {
@@ -323,11 +348,48 @@
     lista.addEventListener('dragover',e=>{ e.preventDefault(); const drag=lista.querySelector('.dragging'); if(!drag) return; const next=[...lista.querySelectorAll('.top-item:not(.dragging)')].find(s=>e.clientY<s.getBoundingClientRect().top+s.getBoundingClientRect().height/2); lista.insertBefore(drag,next||null); actualizarPosiciones(lista,contador); });
 
     input.addEventListener('input',()=>{
-      const q=input.value.trim().toLowerCase(); if(!q){resultados.style.display='none';return;}
-      const f=CATALOGO.filter(c=>c.title.toLowerCase().includes(q)); if(!f.length){resultados.style.display='none';return;}
-      resultados.innerHTML=f.map(c=>`<div class="top-resultado-item" data-id="${c.id}" data-title="${c.title}" data-img="${c.img}"><img src="${c.img}" class="top-resultado-img"/><span>${c.title}</span></div>`).join('');
-      resultados.style.display='block';
-      resultados.querySelectorAll('.top-resultado-item').forEach(r=>r.addEventListener('click',()=>{ agregarItemTop(lista,contador,r.dataset.id,r.dataset.title,r.dataset.img); updateTopData(topId,lista,contador); input.value=''; resultados.style.display='none'; }));
+      const q = normalizar(input.value.trim());
+      if (!q || q.length < 2) { resultados.style.display = 'none'; return; }
+
+      // Usar catálogo completo del back si está disponible
+      const catalogo = (window.CATALOGO_COMPLETO && window.CATALOGO_COMPLETO.length)
+        ? window.CATALOGO_COMPLETO
+        : CATALOGO;
+
+      const filtradas = catalogo.filter(c =>
+        normalizar(c.title || '').includes(q) ||
+        normalizar((Array.isArray(c.genres) ? c.genres.join(' ') : c.genres) || '').includes(q)
+      ).slice(0, 8);
+
+      if (!filtradas.length) { resultados.style.display = 'none'; return; }
+
+      resultados.innerHTML = filtradas.map(c => `
+        <div class="top-resultado-item" 
+             data-id="${c.id || c.tmdbId}" 
+             data-title="${c.title}" 
+             data-img="${c.img || ''}">
+          <img src="${c.img || ''}" class="top-resultado-img" onerror="this.style.display='none'"/>
+          <div style="flex:1; min-width:0;">
+            <span style="display:block; font-size:14px; font-weight:600; color:#fff;
+                         white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+              ${c.title}
+            </span>
+            <span style="font-size:12px; color:#8D95A5;">
+              ${c.type || ''} ${c.platform ? '· ' + c.platform : ''}
+            </span>
+          </div>
+        </div>`).join('');
+
+      resultados.style.display = 'block';
+
+      resultados.querySelectorAll('.top-resultado-item').forEach(r => {
+        r.addEventListener('click', () => {
+          agregarItemTop(lista, contador, r.dataset.id, r.dataset.title, r.dataset.img);
+          updateTopData(topId, lista, contador);
+          input.value = '';
+          resultados.style.display = 'none';
+        });
+      });
     });
     document.addEventListener('click',e=>{ if(!cardEl.contains(e.target)) resultados.style.display='none'; });
   }
