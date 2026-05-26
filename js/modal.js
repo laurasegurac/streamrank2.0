@@ -108,39 +108,72 @@
 
   /* ── ABRIR MODAL ── */
   function openModal(itemId) {
-    const dataItem = typeof DATA !== 'undefined' ? DATA[itemId] : undefined;
-    const d = dataItem || buildCardFallback(itemId);
-    if (!d) return;
+  let d = null;
 
-    currentItemId     = itemId;
-    currentTrailerUrl = d.trailerUrl || '';
-    trailerOpen       = false;
-
-    elImg.src              = d.img || '';
-    elImg.alt              = d.title || '';
-    elPlatform.textContent = d.platform || '';
-    elType.textContent     = d.type || '';
-    elGenre.textContent    = d.genres ? '• ' + d.genres : '';
-    elTitle.textContent    = d.title || '';
-    elRating.textContent   = d.rating || '';
-    elDuration.textContent = d.duration || '';
-    elDesc.textContent     = d.desc || '';
-
-    elPlatform.style.display               = d.platform ? '' : 'none';
-    elGenre.style.display                  = d.genres   ? '' : 'none';
-    elDuration.parentElement.style.display = d.duration ? '' : 'none';
-    trailerBtn.style.display               = currentTrailerUrl ? 'inline-flex' : 'none';
-
-    trailerBox.classList.remove('is-visible');
-    iframe.src = '';
-    trailerBtn.innerHTML = '<img src="assets/icons/Play.svg" alt="" /> Ver Tráiler';
-
-    actualizarBtnGuardar(itemId);
-
-    overlay.classList.add('is-open');
-    document.body.style.overflow = 'hidden';
-    closeBtn.focus();
+  // 1. Buscar en DATA hardcodeado
+  if (typeof DATA !== 'undefined' && DATA[itemId]) {
+    d = DATA[itemId];
   }
+
+  // 2. Buscar en catálogo completo del back
+  if (!d) {
+    const catalogo = window.CATALOGO_COMPLETO || window._ITEMS || [];
+    const found = catalogo.find(i => i.id === itemId);
+    if (found) {
+      d = {
+        title:        found.title || '',
+        type:         found.type  || '',
+        genres:       Array.isArray(found.genres) ? found.genres.join(', ') : (found.genres || ''),
+        rating:       String(found.rating || ''),
+        duration:     found.duration || '',
+        platform:     found.platform || '',
+        platformBadge:found.platform || '',
+        desc:         found.desc    || '',
+        img:          found.img     || '',
+        trailerUrl:   found.trailer || '',
+      };
+    }
+  }
+
+  // 3. Fallback al DOM
+  if (!d) d = buildCardFallback(itemId);
+  if (!d) return;
+
+  currentItemId     = itemId;
+  currentTrailerUrl = d.trailerUrl || '';
+  trailerOpen       = false;
+
+  elImg.src              = d.img || '';
+  elImg.alt              = d.title || '';
+  elPlatform.textContent = d.platform || '';
+  elType.textContent     = d.type || '';
+  elGenre.textContent    = d.genres ? '• ' + d.genres : '';
+  elTitle.textContent    = d.title || '';
+  elRating.textContent   = d.rating || '';
+  elDuration.textContent = d.duration || '';
+  elDesc.textContent     = d.desc || '';
+
+  elPlatform.style.display               = d.platform ? '' : 'none';
+  elGenre.style.display                  = d.genres   ? '' : 'none';
+  elDuration.parentElement.style.display = d.duration ? '' : 'none';
+  trailerBtn.style.display               = currentTrailerUrl ? 'inline-flex' : 'none';
+
+  trailerBox.classList.remove('is-visible');
+  iframe.src = '';
+  trailerBtn.innerHTML = '<img src="assets/icons/Play.svg" alt="" /> Ver Tráiler';
+
+  actualizarBtnGuardar(itemId);
+
+  overlay.classList.add('is-open');
+  document.body.style.overflow = 'hidden';
+  closeBtn.focus();
+}
+
+
+
+
+
+
   function buildCardFallback(itemId) {
   const li = document.querySelector(`li[data-item-id="${itemId}"]`);
   if (!li) return null;
@@ -194,50 +227,66 @@
   });
 
   /* ── GUARDAR DESDE EL MODAL ── */
-  saveBtn.addEventListener('click', () => {
-    if (!currentItemId) return;
+  saveBtn.addEventListener('click', async () => {
+  if (!currentItemId) return;
 
-    // Sin sesión → abrir modal de auth
-    if (!Auth.getUser()) {
-      closeModal();
-      AuthModal.open('login', () => openModal(currentItemId));
-      return;
+  if (!Auth.getUser()) {
+    closeModal();
+    AuthModal.open('login', () => openModal(currentItemId));
+    return;
+  }
+
+  // Buscar datos
+  let d = (typeof DATA !== 'undefined' && DATA[currentItemId]) ? DATA[currentItemId] : null;
+  if (!d) {
+    const catalogo = window.CATALOGO_COMPLETO || window._ITEMS || [];
+    const found = catalogo.find(i => i.id === currentItemId);
+    if (found) d = {
+      title:    found.title,
+      type:     found.type,
+      genres:   Array.isArray(found.genres) ? found.genres.join(', ') : (found.genres || ''),
+      rating:   String(found.rating || ''),
+      desc:     found.desc || '',
+      img:      found.img  || '',
+      platform: found.platform || '',
+      platformBadge: found.platform || '',
+    };
+  }
+  if (!d) d = buildCardFallback(currentItemId);
+  if (!d) return;
+
+  if (window.Listas.estaEnHistorial(currentItemId)) return;
+
+  if (window.Listas.estaGuardado(currentItemId)) {
+    await window.Listas.quitar(currentItemId);
+    actualizarBtnGuardar(currentItemId);
+    sincronizarBtnTarjeta(currentItemId, false);
+    showToast(`"${d.title}" quitado de Ver después`);
+  } else {
+    const item = {
+      id:       currentItemId,
+      title:    d.title,
+      type:     d.type,
+      genres:   d.genres,
+      rating:   d.rating,
+      desc:     d.desc,
+      img:      d.img,
+      platform: d.platformBadge || d.platform,
+    };
+    const resultado = await window.Listas.guardar(item);
+    actualizarBtnGuardar(currentItemId);
+    sincronizarBtnTarjeta(currentItemId, resultado === 'ok');
+    if (resultado === 'ok') {
+      showToast(`"${d.title}" agregado a Ver después`);
+    } else if (resultado === 'duplicado') {
+      showToast(`"${d.title}" ya está en tu lista`);
     }
+  }
+});
 
-    const d = DATA[currentItemId] || buildCardFallback(currentItemId);
-    if (!d) return;
 
-    // Si ya está en historial, no hacer nada
-    if (window.Listas.estaEnHistorial(currentItemId)) return;
 
-    // Toggle: si ya guardado → quitar; si no → guardar
-    if (window.Listas.estaGuardado(currentItemId)) {
-      window.Listas.quitar(currentItemId);
-      actualizarBtnGuardar(currentItemId);
-      // Actualizar botón save de la tarjeta en la lista
-      sincronizarBtnTarjeta(currentItemId, false);
-      showToast(`"${d.title}" quitado de Ver después`);
-    } else {
-      const item = {
-        id:       currentItemId,
-        title:    d.title,
-        type:     d.type,
-        genres:   d.genres,
-        rating:   d.rating,
-        desc:     d.desc,
-        img:      d.img,
-        platform: d.platformBadge || d.platform,
-      };
-      const resultado = window.Listas.guardar(item);
-      actualizarBtnGuardar(currentItemId);
-      sincronizarBtnTarjeta(currentItemId, resultado === 'ok');
-      if (resultado === 'ok') {
-        showToast(`"${d.title}" agregado a Ver después`);
-      } else if (resultado === 'duplicado') {
-        showToast(`"${d.title}" ya está en tu lista`);
-      }
-    }
-  });
+
 
   /* Sincronizar el .btn-save de la tarjeta en la lista cuando se guarda desde el modal */
   function sincronizarBtnTarjeta(itemId, guardado) {

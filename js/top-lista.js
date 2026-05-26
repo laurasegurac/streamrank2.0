@@ -30,6 +30,7 @@
     'disney':         'Disney',
     'studio-ghibli':  'Studio Ghibli',
     'star-wars':      'Star Wars',
+    'anime':          'Anime',
     'harry-potter':   'Harry Potter',
     'lotr':           'Lord of the Rings',
     'mcu':            'Marvel Cinematic Universe',

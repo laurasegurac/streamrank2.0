@@ -31,12 +31,29 @@
   };
 
   function getPlatformInfo(platform) {
-    const key = (platform || '').toLowerCase();
-    return {
-      cls:   PLATFORM_CLS[key]   || 'platform-badge--netflix',
-      label: PLATFORM_LABEL[key] || (platform || 'TOP 10'),
-    };
+    // Acepta string, array u objeto. Normaliza a string segura.
+    let key = '';
+    if (Array.isArray(platform)) key = platform.join(' ').toLowerCase();
+    else if (platform && typeof platform === 'object') key = (platform.name || platform.label || '') .toLowerCase();
+    else key = String(platform || '').toLowerCase();
+
+    if (!key) return { cls: '', label: '' };
+
+    if (key.includes('netflix')) return { cls: 'platform-badge--netflix', label: 'NETFLIX' };
+    if (key.includes('amazon') || key.includes('prime')) return { cls: 'platform-badge--prime', label: 'PRIME' };
+    if (key.includes('disney')) return { cls: 'platform-badge--disney', label: 'DISNEY+' };
+    if (key.includes('hbo')) return { cls: 'platform-badge--hbo', label: 'HBO MAX' };
+    if (key.includes('apple')) return { cls: 'platform-badge--apple', label: 'APPLE TV+' };
+
+    // Plataforma no reconocida: devolver etiqueta cruda
+    return { cls: 'platform-badge--default', label: platform || key || '' };
   }
+  
+  
+  
+  
+  
+  
 
   function normalizar(str) {
     return str.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
@@ -75,7 +92,16 @@
 
   function cardHTML(item, rank) {
     const generosTxt = Array.isArray(item.genres) ? item.genres.join(', ') : (item.genres || '');
-    const p = getPlatformInfo(item.platform);
+    // Normalizar posibles formatos de plataforma en los datos
+    function extractPlatform(it) {
+      if (!it) return '';
+      if (Array.isArray(it) && it.length) return String(it[0]);
+      if (typeof it === 'object') return it.name || it.label || '';
+      return String(it || '');
+    }
+
+    const platformStr = extractPlatform(item.platform || item.platforms || item.categoria || item.category);
+    const p = getPlatformInfo(platformStr);
 
     return `
       <li data-item-id="${item.id}">
@@ -105,7 +131,7 @@
             </div>
           </div>
           <div class="card__side">
-            <span class="platform-badge ${p.cls}">${p.label}</span>
+            ${p.label ? `<span class="platform-badge ${p.cls}">${p.label}</span>` : ''}
             <button class="btn-save" aria-label="Guardar ${item.title}" aria-pressed="false">
               <img src="assets/icons/agregar.svg" alt="" class="save-icon" />
             </button>
@@ -131,24 +157,59 @@
   if (btnTrailer) btnTrailer.dataset.heroId = item.id;
   if (btnGuardar) btnGuardar.dataset.heroId = item.id;
 }
-
-
-
   function render() {
-    const visible = ITEMS.filter(matches);
-    visible.sort((a, b) =>
-      state.sort === 'rating'
-        ? b.rating - a.rating
-        : (b.points || 0) - (a.points || 0)
-    );
+  const visible = ITEMS.filter(matches);
+  visible.sort((a, b) =>
+    state.sort === 'rating'
+      ? b.rating - a.rating
+      : (b.points || 0) - (a.points || 0)
+  );
 
-    if (visible.length === 0) {
-      list.innerHTML = `<li><p style="padding:40px 0;text-align:center;color:var(--color-text-muted);">No hay resultados para estos filtros.</p></li>`;
-      return;
-    }
+  // Siempre mostrar solo top 10 del resultado filtrado
+  const top10 = visible.slice(0, 10);
 
-    list.innerHTML = visible.map((item, i) => cardHTML(item, i + 1)).join('');
+  if (top10.length === 0) {
+    list.innerHTML = `<li><p style="padding:40px 0;text-align:center;color:var(--color-text-muted);">No hay resultados para estos filtros.</p></li>`;
+    return;
   }
+
+  list.innerHTML = top10.map((item, i) => cardHTML(item, i + 1)).join('');
+}
+
+let CATALOGO_COMPLETO = []; // todos los items del scraping
+
+async function cargarCatalogoCompleto() {
+  try {
+    const res  = await fetch(`${API_URL}/api/movies`);
+    const data = await res.json();
+    
+    if (Array.isArray(data)) {
+      CATALOGO_COMPLETO = data;
+      window.CATALOGO_COMPLETO = CATALOGO_COMPLETO;
+    } else {
+      // Es objeto por categorías — aplanar todo
+      const vistos = new Set();
+      const todos  = [];
+      for (const items of Object.values(data)) {
+        for (const item of items) {
+          const key = item.tmdbId || item.id;
+          if (!vistos.has(key)) {
+            vistos.add(key);
+            todos.push(item);
+          }
+        }
+      }
+      CATALOGO_COMPLETO = todos;
+      window.CATALOGO_COMPLETO = CATALOGO_COMPLETO;
+    }
+    console.log(`📚 Catálogo completo: ${CATALOGO_COMPLETO.length} items`);
+  } catch (err) {
+    console.error('Error cargando catálogo completo:', err);
+    CATALOGO_COMPLETO = ITEMS; // fallback al top
+    window.CATALOGO_COMPLETO = ITEMS;
+  }
+}
+
 
   async function cargarDatos() {
     list.innerHTML = `<li><p style="padding:40px 0;text-align:center;color:var(--color-text-muted);">Cargando...</p></li>`;
@@ -162,6 +223,7 @@
       actualizarHero(ITEMS[0]);
       poblarGeneros();
       render();
+      cargarCatalogoCompleto();
     } catch (err) {
       list.innerHTML = `<li><p style="padding:40px 0;text-align:center;color:var(--color-text-muted);">Error cargando datos.</p></li>`;
       console.error(err);
@@ -203,5 +265,119 @@
   });
 
   cargarDatos();
+  /* ── BÚSQUEDA GLOBAL ── */
+const searchInput = document.getElementById('site-search');
+if (searchInput) {
+  // Crear dropdown de resultados
+  const searchWrap = searchInput.closest('.search-form');
+  searchWrap.style.position = 'relative';
+
+  const dropdown = document.createElement('div');
+  dropdown.id = 'searchDropdown';
+  dropdown.style.cssText = `
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    right: 0;
+    background: #0F172B;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 12px;
+    overflow: hidden;
+    z-index: 200;
+    display: none;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+    max-height: 400px;
+    overflow-y: auto;
+  `;
+  searchWrap.appendChild(dropdown);
+
+  function normalizeSearch(str) {
+    return str.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  }
+
+  searchInput.addEventListener('input', () => {
+    const q = normalizeSearch(searchInput.value.trim());
+    if (!q || q.length < 2) { dropdown.style.display = 'none'; return; }
+
+
+
+
+    const catalogo = (window.CATALOGO_COMPLETO && window.CATALOGO_COMPLETO.length)
+      ? window.CATALOGO_COMPLETO
+      : ITEMS;
+
+
+
+
+
+    const resultados = catalogo.filter(item =>
+      normalizeSearch(item.title).includes(q) ||
+      normalizeSearch((item.genres || []).join(' ')).includes(q)
+    ).slice(0, 8);
+
+    if (!resultados.length) { dropdown.style.display = 'none'; return; }
+
+    dropdown.innerHTML = resultados.map(item => {
+      const generos = Array.isArray(item.genres) ? item.genres.slice(0,2).join(', ') : '';
+      const p = getPlatformInfo(item.platform);
+      return `
+        <div class="search-result-item" data-id="${item.id}" style="
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          padding: 10px 14px;
+          cursor: pointer;
+          transition: background 0.15s;
+          border-bottom: 1px solid rgba(255,255,255,0.05);
+        ">
+          <img src="${item.img}" alt="${item.title}" style="
+            width: 36px; height: 52px;
+            border-radius: 4px;
+            object-fit: cover;
+            flex-shrink: 0;
+          "/>
+          <div style="flex:1; min-width:0;">
+            <p style="margin:0; font-size:14px; font-weight:600; color:#fff;
+                      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+              ${item.title}
+            </p>
+            <p style="margin:0; font-size:12px; color:#8D95A5;">${item.type} · ${generos}</p>
+          </div>
+          ${p.label ? `<span style="
+            font-size:10px; font-weight:700;
+            padding: 3px 8px;
+            border-radius: 4px;
+            background: var(--color-brand);
+            color: #fff;
+            flex-shrink: 0;
+          ">${p.label}</span>` : ''}
+        </div>`;
+    }).join('');
+
+    dropdown.style.display = 'block';
+
+    dropdown.querySelectorAll('.search-result-item').forEach(el => {
+      el.addEventListener('mouseenter', () => el.style.background = 'rgba(255,255,255,0.06)');
+      el.addEventListener('mouseleave', () => el.style.background = '');
+      el.addEventListener('click', () => {
+        const id = el.dataset.id;
+        dropdown.style.display = 'none';
+        searchInput.value = '';
+        // Abrir modal con ese item
+        if (window.Modal) window.Modal.open(id);
+      });
+    });
+  });
+
+  // Cerrar al hacer clic afuera
+  document.addEventListener('click', e => {
+    if (!searchWrap.contains(e.target)) dropdown.style.display = 'none';
+  });
+
+  // Cerrar con Escape
+  searchInput.addEventListener('keydown', e => {
+    if (e.key === 'Escape') { dropdown.style.display = 'none'; searchInput.value = ''; }
+  });
+}
 
 })();
