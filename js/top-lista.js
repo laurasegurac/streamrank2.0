@@ -30,8 +30,7 @@
     'disney':         'Disney',
     'studio-ghibli':  'Studio Ghibli',
     'anime':          'Anime',
-    'harry-potter':   'Harry Potter',
-    'lotr':           'Lord of the Rings',
+    'drama':          'Drama',
     'mcu':            'Marvel Cinematic Universe',
   };
 
