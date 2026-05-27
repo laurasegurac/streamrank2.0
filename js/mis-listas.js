@@ -259,6 +259,7 @@
   }
 
   /* ── TAB 3: TOPS (localStorage) ── */
+  /* ── TAB 3: TOPS (back) ── */
   const topsGrid    = document.getElementById('topsGrid');
   const btnCrear    = document.getElementById('btnCrearTop');
   const formTop     = document.getElementById('formCrearTop');
@@ -266,20 +267,21 @@
   const btnCancelar = document.getElementById('btnCancelarTop');
   const nombreInp   = document.getElementById('nombreTop');
 
-  function renderTops() {
+  async function renderTops() {
     if (!topsGrid) return;
+    data.tops = await window.Listas.loadTops();
     topsGrid.innerHTML = data.tops.map(top => buildTopCard(top)).join('');
     topsGrid.querySelectorAll('.top-card').forEach(card => initTopCard(card, card.dataset.topId));
   }
 
-  function saveTopsLocal() {
-    window.Listas.saveTops(data.tops);
+  async function saveTop(topId, updates) {
+    await window.Listas.actualizarTop(topId, updates);
   }
 
   function buildTopCard(top) {
-    const items=(top.items||[]).map((item,i)=>`
+    const items = (top.items || []).map((item, i) => `
       <div class="top-item" draggable="true" data-item-id="${item.id}">
-        <span class="top-item__pos">${i+1}</span>
+        <span class="top-item__pos">${i + 1}</span>
         <img class="top-item__img" src="${item.img}" alt="${item.title}" loading="lazy"/>
         <span class="top-item__titulo">${item.title}</span>
         <button class="top-item__delete" type="button">✕</button>
@@ -308,12 +310,16 @@
               <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h10M6 4V2h4v2M5 4l.5 9h5L11 4"/></svg>
             </button>
           </div>
-          <p class="top-card__meta"><span class="top-count">${(top.items||[]).length}</span> elementos</p>
+          <p class="top-card__meta"><span class="top-count">${(top.items || []).length}</span> elementos</p>
         </div>
         <div class="top-card__items" data-lista>${items}</div>
         <div class="top-card__buscador">
           <div class="top-search-wrap">
-            <span class="top-search-icon"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="6.5" cy="6.5" r="4"/><path d="M10 10l3 3"/></svg></span>
+            <span class="top-search-icon">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="6.5" cy="6.5" r="4"/><path d="M10 10l3 3"/>
+              </svg>
+            </span>
             <input type="text" class="top-search-input" placeholder="Agregar más…"/>
           </div>
           <div class="top-search-resultados"></div>
@@ -322,36 +328,87 @@
   }
 
   function initTopCard(cardEl, topId) {
-    const lista=cardEl.querySelector('[data-lista]'), contador=cardEl.querySelector('.top-count');
-    const input=cardEl.querySelector('.top-search-input'), resultados=cardEl.querySelector('.top-search-resultados');
+    const lista     = cardEl.querySelector('[data-lista]');
+    const contador  = cardEl.querySelector('.top-count');
+    const input     = cardEl.querySelector('.top-search-input');
+    const resultados= cardEl.querySelector('.top-search-resultados');
 
-    cardEl.querySelector('.top-card__btn-delete').addEventListener('click',()=>{
-      if(!confirm('¿Eliminar este top?')) return;
-      data.tops=data.tops.filter(t=>t.id!==topId); saveTopsLocal(); renderTops();
+    // ── Eliminar top ──
+    cardEl.querySelector('.top-card__btn-delete').addEventListener('click', async () => {
+      if (!confirm('¿Eliminar este top?')) return;
+      await window.Listas.eliminarTop(topId);
+      data.tops = data.tops.filter(t => String(t.id) !== String(topId));
+      topsGrid.innerHTML = data.tops.map(top => buildTopCard(top)).join('');
+      topsGrid.querySelectorAll('.top-card').forEach(card => initTopCard(card, card.dataset.topId));
     });
 
-    const nombreWrap=cardEl.querySelector('.top-card__nombre-wrap'), renameForm=cardEl.querySelector('.top-card__rename-form');
-    const nombreH3=cardEl.querySelector('.top-card__nombre'), renameInp=cardEl.querySelector('.top-card__rename-input');
+    // ── Renombrar ──
+    const nombreWrap  = cardEl.querySelector('.top-card__nombre-wrap');
+    const renameForm  = cardEl.querySelector('.top-card__rename-form');
+    const nombreH3    = cardEl.querySelector('.top-card__nombre');
+    const renameInp   = cardEl.querySelector('.top-card__rename-input');
 
-    cardEl.querySelector('.top-card__btn-rename').addEventListener('click',()=>{ nombreWrap.style.display='none'; renameForm.style.display='flex'; renameInp.focus(); renameInp.select(); });
+    cardEl.querySelector('.top-card__btn-rename').addEventListener('click', () => {
+      nombreWrap.style.display = 'none';
+      renameForm.style.display = 'flex';
+      renameInp.focus();
+      renameInp.select();
+    });
 
-    function confirmarRename(){ const n=renameInp.value.trim(); if(n){ nombreH3.textContent=n; const t=data.tops.find(t=>t.id===topId); if(t){t.nombre=n;saveTopsLocal();} } renameForm.style.display='none'; nombreWrap.style.display='flex'; }
-    function cancelarRename(){ renameInp.value=nombreH3.textContent; renameForm.style.display='none'; nombreWrap.style.display='flex'; }
+    function confirmarRename() {
+      const n = renameInp.value.trim();
+      if (n) {
+        nombreH3.textContent = n;
+        const t = data.tops.find(t => String(t.id) === String(topId));
+        if (t) { t.nombre = n; saveTop(topId, { nombre: n }); }
+      }
+      renameForm.style.display = 'none';
+      nombreWrap.style.display = 'flex';
+    }
 
-    cardEl.querySelector('.top-card__btn-rename-ok').addEventListener('click',confirmarRename);
-    cardEl.querySelector('.top-card__btn-rename-cancel').addEventListener('click',cancelarRename);
-    renameInp.addEventListener('keydown',e=>{ if(e.key==='Enter')confirmarRename(); if(e.key==='Escape')cancelarRename(); });
+    function cancelarRename() {
+      renameInp.value = nombreH3.textContent;
+      renameForm.style.display = 'none';
+      nombreWrap.style.display = 'flex';
+    }
 
-    lista.addEventListener('click',e=>{ const del=e.target.closest('.top-item__delete'); if(!del) return; del.closest('.top-item').remove(); updateTopData(topId,lista,contador); });
-    lista.addEventListener('dragstart',e=>e.target.closest('.top-item')?.classList.add('dragging'));
-    lista.addEventListener('dragend',e=>{ e.target.closest('.top-item')?.classList.remove('dragging'); updateTopData(topId,lista,contador); });
-    lista.addEventListener('dragover',e=>{ e.preventDefault(); const drag=lista.querySelector('.dragging'); if(!drag) return; const next=[...lista.querySelectorAll('.top-item:not(.dragging)')].find(s=>e.clientY<s.getBoundingClientRect().top+s.getBoundingClientRect().height/2); lista.insertBefore(drag,next||null); actualizarPosiciones(lista,contador); });
+    cardEl.querySelector('.top-card__btn-rename-ok').addEventListener('click', confirmarRename);
+    cardEl.querySelector('.top-card__btn-rename-cancel').addEventListener('click', cancelarRename);
+    renameInp.addEventListener('keydown', e => {
+      if (e.key === 'Enter') confirmarRename();
+      if (e.key === 'Escape') cancelarRename();
+    });
 
-    input.addEventListener('input',()=>{
+    // ── Eliminar item ──
+    lista.addEventListener('click', e => {
+      const del = e.target.closest('.top-item__delete');
+      if (!del) return;
+      del.closest('.top-item').remove();
+      updateTopData(topId, lista, contador);
+    });
+
+    // ── Drag & drop ──
+    lista.addEventListener('dragstart', e => e.target.closest('.top-item')?.classList.add('dragging'));
+    lista.addEventListener('dragend',   e => {
+      e.target.closest('.top-item')?.classList.remove('dragging');
+      updateTopData(topId, lista, contador);
+    });
+    lista.addEventListener('dragover', e => {
+      e.preventDefault();
+      const drag = lista.querySelector('.dragging');
+      if (!drag) return;
+      const next = [...lista.querySelectorAll('.top-item:not(.dragging)')].find(s =>
+        e.clientY < s.getBoundingClientRect().top + s.getBoundingClientRect().height / 2
+      );
+      lista.insertBefore(drag, next || null);
+      actualizarPosiciones(lista, contador);
+    });
+
+    // ── Buscador ──
+    input.addEventListener('input', () => {
       const q = normalizar(input.value.trim());
       if (!q || q.length < 2) { resultados.style.display = 'none'; return; }
 
-      // Usar catálogo completo del back si está disponible
       const catalogo = (window.CATALOGO_COMPLETO && window.CATALOGO_COMPLETO.length)
         ? window.CATALOGO_COMPLETO
         : CATALOGO;
@@ -364,9 +421,9 @@
       if (!filtradas.length) { resultados.style.display = 'none'; return; }
 
       resultados.innerHTML = filtradas.map(c => `
-        <div class="top-resultado-item" 
-             data-id="${c.id || c.tmdbId}" 
-             data-title="${c.title}" 
+        <div class="top-resultado-item"
+             data-id="${c.id || c.tmdbId}"
+             data-title="${c.title}"
              data-img="${c.img || ''}">
           <img src="${c.img || ''}" class="top-resultado-img" onerror="this.style.display='none'"/>
           <div style="flex:1; min-width:0;">
@@ -391,18 +448,82 @@
         });
       });
     });
-    document.addEventListener('click',e=>{ if(!cardEl.contains(e.target)) resultados.style.display='none'; });
+
+    document.addEventListener('click', e => {
+      if (!cardEl.contains(e.target)) resultados.style.display = 'none';
+    });
   }
 
-  function agregarItemTop(lista,contador,id,title,img){ const item=document.createElement('div'); item.className='top-item'; item.draggable=true; item.dataset.itemId=id; item.innerHTML=`<span class="top-item__pos">${lista.children.length+1}</span><img class="top-item__img" src="${img}" alt="${title}" loading="lazy"/><span class="top-item__titulo">${title}</span><button class="top-item__delete" type="button">✕</button>`; lista.appendChild(item); actualizarPosiciones(lista,contador); }
-  function actualizarPosiciones(lista,contador){ lista.querySelectorAll('.top-item').forEach((el,i)=>el.querySelector('.top-item__pos').textContent=i+1); if(contador) contador.textContent=lista.children.length; }
-  function updateTopData(topId,lista,contador){ actualizarPosiciones(lista,contador); const top=data.tops.find(t=>t.id===topId); if(!top) return; top.items=[...lista.querySelectorAll('.top-item')].map(el=>({id:el.dataset.itemId,title:el.querySelector('.top-item__titulo').textContent,img:el.querySelector('.top-item__img').src})); saveTopsLocal(); }
+  function agregarItemTop(lista, contador, id, title, img) {
+    const item = document.createElement('div');
+    item.className  = 'top-item';
+    item.draggable  = true;
+    item.dataset.itemId = id;
+    item.innerHTML  = `
+      <span class="top-item__pos">${lista.children.length + 1}</span>
+      <img class="top-item__img" src="${img}" alt="${title}" loading="lazy"/>
+      <span class="top-item__titulo">${title}</span>
+      <button class="top-item__delete" type="button">✕</button>`;
+    lista.appendChild(item);
+    actualizarPosiciones(lista, contador);
+  }
 
-  if(btnCrear)    btnCrear.addEventListener('click',()=>{formTop.hidden=false;btnCrear.style.display='none';nombreInp.focus();});
-  if(btnCancelar) btnCancelar.addEventListener('click',()=>{formTop.hidden=true;btnCrear.style.display='';nombreInp.value='';});
-  if(btnGuardar)  btnGuardar.addEventListener('click',()=>{ const nombre=nombreInp.value.trim()||'Mi Nuevo Top'; data.tops.push({id:Date.now().toString(),nombre,items:[]}); saveTopsLocal(); renderTops(); formTop.hidden=true; btnCrear.style.display=''; nombreInp.value=''; });
+  function actualizarPosiciones(lista, contador) {
+    lista.querySelectorAll('.top-item').forEach((el, i) => {
+      el.querySelector('.top-item__pos').textContent = i + 1;
+    });
+    if (contador) contador.textContent = lista.children.length;
+  }
+
+  function updateTopData(topId, lista, contador) {
+    actualizarPosiciones(lista, contador);
+    const top = data.tops.find(t => String(t.id) === String(topId));
+    if (!top) return;
+    top.items = [...lista.querySelectorAll('.top-item')].map(el => ({
+      id:    el.dataset.itemId,
+      title: el.querySelector('.top-item__titulo').textContent,
+      img:   el.querySelector('.top-item__img').src,
+    }));
+    saveTop(topId, { items: top.items });
+  }
+
+  // ── Botones formulario ──
+  if (btnCrear)    btnCrear.addEventListener('click', () => {
+    formTop.hidden = false;
+    btnCrear.style.display = 'none';
+    nombreInp.focus();
+  });
+
+  if (btnCancelar) btnCancelar.addEventListener('click', () => {
+    formTop.hidden = true;
+    btnCrear.style.display = '';
+    nombreInp.value = '';
+  });
+
+  if (btnGuardar)  btnGuardar.addEventListener('click', async () => {
+    const nombre = nombreInp.value.trim() || 'Mi Nuevo Top';
+    const nuevo  = await window.Listas.crearTop(nombre);
+    if (nuevo) {
+      data.tops.push(nuevo);
+      topsGrid.innerHTML = data.tops.map(top => buildTopCard(top)).join('');
+      topsGrid.querySelectorAll('.top-card').forEach(card => initTopCard(card, card.dataset.topId));
+    }
+    formTop.hidden = true;
+    btnCrear.style.display = '';
+    nombreInp.value = '';
+  });
 
   initPage();
   window.addEventListener('auth:changed', initPage);
+
+
+  
+
+
+
+
+
+
+
 
 })();

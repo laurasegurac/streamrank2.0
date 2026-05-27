@@ -9,27 +9,19 @@
 
   const API_URL = 'http://localhost:3000';
 
-  /* ── Tops: siguen en localStorage ── */
-  function getTopsKey() {
+  const _cache = { verDespues: [], historial: [] };
+
+  /* ── Tops: 
+  /* ── Tops → ahora en el back ── */
+  async function fetchTops() {
     const user = Auth.getUser();
-    return user ? `streamrank_tops_${user.id}` : null;
+    if (!user) return [];
+    try {
+      const res  = await fetch(`${API_URL}/api/tops/${user.id}`);
+      const data = await res.json();
+      return data.ok ? data.data : [];
+    } catch { return []; }
   }
-
-  function loadTops() {
-    const key = getTopsKey();
-    if (!key) return [];
-    try { return JSON.parse(localStorage.getItem(key) || '[]'); }
-    catch { return []; }
-  }
-
-  function saveTops(tops) {
-    const key = getTopsKey();
-    if (key) localStorage.setItem(key, JSON.stringify(tops));
-  }
-
-  /* ── Cache en memoria para evitar fetch repetidos ── */
-  let _cache = { verDespues: [], historial: [] };
-  let _cacheLoaded = false;
 
   async function fetchLists() {
     const user = Auth.getUser();
@@ -38,29 +30,65 @@
       const res  = await fetch(`${API_URL}/api/lists/${user.id}`);
       const data = await res.json();
       if (data.ok) {
-        _cache = data.data;
-        _cacheLoaded = true;
+        _cache.verDespues = data.data.verDespues || [];
+        _cache.historial  = data.data.historial  || [];
+        return { verDespues: _cache.verDespues, historial: _cache.historial };
       }
-      return _cache;
     } catch {
-      return _cache;
+      // Ignorar y devolver estado vacío
     }
+    _cache.verDespues = [];
+    _cache.historial  = [];
+    return { verDespues: [], historial: [] };
   }
 
-  /* ── API PÚBLICA ── */
   window.Listas = {
+    async loadTops() {
+      return await fetchTops();
+    },
 
-    /* Cargar listas del servidor */
+    async crearTop(nombre) {
+      const user = Auth.getUser();
+      if (!user) return null;
+      try {
+        const res  = await fetch(`${API_URL}/api/tops`, {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ userId: user.id, nombre }),
+        });
+        const data = await res.json();
+        return data.ok ? data.data : null;
+      } catch { return null; }
+    },
+
+    async actualizarTop(topId, updates) {
+      try {
+        const res = await fetch(`${API_URL}/api/tops/${topId}`, {
+          method:  'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify(updates),
+        });
+        const data = await res.json();
+        return data.ok;
+      } catch { return false; }
+    },
+
+    async eliminarTop(topId) {
+      try {
+        const res  = await fetch(`${API_URL}/api/tops/${topId}`, { method: 'DELETE' });
+        const data = await res.json();
+        return data.ok;
+      } catch { return false; }
+    },
+
     async cargar() {
       return await fetchLists();
     },
 
-    /* Guardar en watchlist */
     async guardar(item) {
       const user = Auth.getUser();
       if (!user) return 'no-auth';
 
-      // Revisar cache
       if (_cache.historial.find(i => i.id === item.id)) return 'historial';
       if (_cache.verDespues.find(i => i.id === item.id)) return 'duplicado';
 
@@ -79,7 +107,6 @@
       } catch { return 'error'; }
     },
 
-    /* Quitar de watchlist */
     async quitar(id) {
       const user = Auth.getUser();
       if (!user) return false;
@@ -94,7 +121,6 @@
       } catch { return false; }
     },
 
-    /* Mover a historial */
     async moverAHistorial(id, extraData = {}) {
       const user = Auth.getUser();
       if (!user) return false;
@@ -102,7 +128,6 @@
       const fechaHoy = new Date().toLocaleDateString('es-CO', { day:'numeric', month:'numeric', year:'numeric' });
 
       try {
-        // Actualizar status a 'watched' + datos extra
         const res = await fetch(`${API_URL}/api/lists/${user.id}/${id}`, {
           method:  'PUT',
           headers: { 'Content-Type': 'application/json' },
@@ -121,7 +146,6 @@
       } catch { return false; }
     },
 
-    /* Actualizar campo del historial (rating, nota, liked, etc.) */
     async actualizarHistorial(id, updates) {
       const user = Auth.getUser();
       if (!user) return false;
@@ -141,7 +165,6 @@
       } catch { return false; }
     },
 
-    /* Eliminar del historial */
     async eliminarDeHistorial(id) {
       const user = Auth.getUser();
       if (!user) return false;
@@ -165,10 +188,6 @@
     },
 
     getCache() { return _cache; },
-
-    /* Tops siguen en localStorage */
-    loadTops,
-    saveTops,
   };
 
   /* ── Sincronizar botones al cargar ── */
