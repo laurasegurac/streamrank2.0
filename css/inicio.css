@@ -564,6 +564,42 @@
   flex-shrink: 0;
   display: block;
 }
+/* ── BADGE ÚLTIMA ACTUALIZACIÓN ── */
+#lastUpdateBadge {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 50;
+
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  padding: 8px 16px;
+
+  background: #0F172B;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: var(--radius-pill);
+
+  font-size: 12px;
+  color: #8D95A5;
+
+  box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+
+  cursor: default;
+
+  backdrop-filter: blur(10px);
+}
+
+#lastUpdateBadge strong {
+  color: #fff;
+}
+
+#lastUpdateBadge svg {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+}
 
 
 /* ── RESPONSIVE ── */
