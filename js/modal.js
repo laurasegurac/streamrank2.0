@@ -5,7 +5,7 @@
 (function () {
   'use strict';
 
-    const API_URL = 'http://localhost:3000';
+    const API_URL = 'https://back-streamrank2-0.onrender.com';
 
   /* ── CREAR MODAL EN EL DOM ── */
   const modalHTML = `

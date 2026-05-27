@@ -7,7 +7,7 @@ const Auth = (function () {
   'use strict';
 
   const USER_KEY  = 'streamrank_user';
-  const API_URL   = 'http://localhost:3000';
+  const API_URL   = 'https://back-streamrank2-0.onrender.com';
 
   /* ── OBTENER USUARIO ACTUAL (sesión local) ── */
   function getUser() {

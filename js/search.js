@@ -6,7 +6,7 @@
 (function () {
   'use strict';
 
-  const API_URL = 'http://localhost:3000';
+  const API_URL = 'https://back-streamrank2-0.onrender.com';
 
   function normalizeSearch(str) {
     return str.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');

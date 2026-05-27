@@ -35,7 +35,7 @@
     // Cargar catálogo completo para búsqueda de tops
     if (!window.CATALOGO_COMPLETO || !window.CATALOGO_COMPLETO.length) {
       try {
-        const res  = await fetch('http://localhost:3000/api/movies');
+        const res  = await fetch('https://back-streamrank2-0.onrender.com/api/movies');
         const data = await res.json();
         const vistos = new Set();
         const todos  = [];
@@ -54,7 +54,7 @@
   }
   async function cargarCatalogo() {
   try {
-    const res  = await fetch('http://localhost:3000/api/movies?global=true');
+    const res  = await fetch('https://back-streamrank2-0.onrender.com/api/movies?global=true');
     const data = await res.json();
     CATALOGO = Array.isArray(data)
       ? data.map(m => ({ id: m.id, title: m.title, img: m.img }))
