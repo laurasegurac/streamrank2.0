@@ -197,6 +197,32 @@
     </div>
   </footer>
 
+  <!-- Badge última actualización -->
+  <div id="lastUpdateBadge" style="
+    display: none;
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 50;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    background: #0F172B;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 9999px;
+    font-size: 12px;
+    color: #8D95A5;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+    cursor: default;
+  ">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"
+         style="width:13px;height:13px;flex-shrink:0;" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="8" cy="8" r="6"/>
+      <path d="M8 5v3l2 2"/>
+    </svg>
+    Actualizado: <strong id="lastUpdateFecha" style="color:#fff; margin-left:4px;"></strong>
+  </div>
+
   <style>
     /* Estilos para los iconos */
     .btn-icon,

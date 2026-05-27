@@ -158,7 +158,11 @@
   if (btnGuardar) btnGuardar.dataset.heroId = item.id;
 }
   function render() {
-  const visible = ITEMS.filter(matches);
+  const fuente = (CATALOGO_COMPLETO && CATALOGO_COMPLETO.length)
+    ? CATALOGO_COMPLETO
+    : ITEMS;
+
+  const visible = fuente.filter(matches);
   visible.sort((a, b) =>
     state.sort === 'rating'
       ? b.rating - a.rating
@@ -203,6 +207,8 @@ async function cargarCatalogoCompleto() {
       window.CATALOGO_COMPLETO = CATALOGO_COMPLETO;
     }
     console.log(`📚 Catálogo completo: ${CATALOGO_COMPLETO.length} items`);
+    poblarGeneros();
+    render();
   } catch (err) {
     console.error('Error cargando catálogo completo:', err);
     CATALOGO_COMPLETO = ITEMS; // fallback al top
@@ -223,15 +229,35 @@ async function cargarCatalogoCompleto() {
       actualizarHero(ITEMS[0]);
       poblarGeneros();
       render();
+      mostrarUltimaActualizacion();
       cargarCatalogoCompleto();
     } catch (err) {
       list.innerHTML = `<li><p style="padding:40px 0;text-align:center;color:var(--color-text-muted);">Error cargando datos.</p></li>`;
       console.error(err);
     }
   }
+
+  async function mostrarUltimaActualizacion() {
+    try {
+      const res  = await fetch(`${API_URL}/api/last-update`);
+      const data = await res.json();
+      if (!data.fecha) return;
+
+      const badge = document.getElementById('lastUpdateBadge');
+      const fecha = document.getElementById('lastUpdateFecha');
+      if (!badge || !fecha) return;
+
+      fecha.textContent = data.fecha;
+      badge.style.display = 'inline-flex';
+    } catch {}
+  }
   function poblarGeneros() {
+  const fuente = (CATALOGO_COMPLETO && CATALOGO_COMPLETO.length)
+    ? CATALOGO_COMPLETO
+    : ITEMS;
+
   const todos = new Set();
-  ITEMS.forEach(item => {
+  fuente.forEach(item => {
     const gs = Array.isArray(item.genres) ? item.genres : [item.genres || ''];
     gs.forEach(g => { if (g) todos.add(g); });
   });
